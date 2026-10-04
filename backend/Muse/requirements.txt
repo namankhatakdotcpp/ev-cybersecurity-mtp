@@ -1,0 +1,4 @@
+# Requires Python >= 3.12 (OpenMuse's constraint). Tested with Python 3.12.15.
+OpenMuse @ https://github.com/DominiqueMakowski/OpenMuse/zipball/main
+numpy
+pandas

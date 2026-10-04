@@ -1,0 +1,16 @@
+model,n_rows,n_participants,n_folds_used,balanced_accuracy,f1,auroc,feature_set,majority_baseline_balanced_acc
+LogisticRegression,1123,126,5,0.5604,0.4243,0.643,behaviour-only,0.5
+RandomForest,1123,126,5,0.587,0.4568,0.6729,behaviour-only,0.5
+XGBoost,1123,126,5,0.5991,0.4581,0.6854,behaviour-only,0.5
+LogisticRegression,1057,122,5,0.5984,0.5107,0.6418,gaze-only,0.5
+RandomForest,1057,122,5,0.5771,0.4637,0.6253,gaze-only,0.5
+XGBoost,1057,122,5,0.5248,0.3476,0.5752,gaze-only,0.5
+LogisticRegression,324,58,5,0.5199,0.4076,0.56,EEG-only,0.5
+RandomForest,324,58,5,0.5731,0.3753,0.5703,EEG-only,0.5
+XGBoost,324,58,5,0.5652,0.3706,0.6022,EEG-only,0.5
+LogisticRegression,1057,122,5,0.5979,0.5109,0.6375,behaviour+gaze,0.5
+RandomForest,1057,122,5,0.5598,0.4526,0.6365,behaviour+gaze,0.5
+XGBoost,1057,122,5,0.5593,0.4107,0.6337,behaviour+gaze,0.5
+LogisticRegression,308,56,5,0.5372,0.4216,0.5751,behaviour+gaze+EEG (EEG-qualified subset),0.5
+RandomForest,308,56,5,0.5963,0.4581,0.6664,behaviour+gaze+EEG (EEG-qualified subset),0.5
+XGBoost,308,56,5,0.6106,0.462,0.6576,behaviour+gaze+EEG (EEG-qualified subset),0.5

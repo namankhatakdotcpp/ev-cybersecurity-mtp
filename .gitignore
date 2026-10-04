@@ -1,0 +1,21 @@
+# Vendored engine install and venvs - large, not our source
+BeamNG.tech.v0.38.3.0/
+backend/vEVTrip/
+
+# Raw/derived data - large, participant data, not source code
+backend/raw_data/
+backend/Muse/decoded/
+backend/rag_index/
+backend/rag_index_archive/
+
+# Large media
+*.mp4
+*.mov
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# OS cruft
+.DS_Store
