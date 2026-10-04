@@ -2225,3 +2225,46 @@ Objective 2, AI pipeline, Experimental plan - **fills a gap between the Research
 
 ### Remarks
 **The separation finding in Attempt 1 is worth escalating on its own, not just explaining away**: it means that as currently defined, "attack_type" (of the chosen kiosk) and "risky decision" are two names for the same fact, not two variables with a relationship to be estimated - any future write-up that frames this project's result as "attack type significantly predicts risky decisions" (using the chosen-kiosk definition) would be reporting a tautology, not a finding. The station-layout-based reformulation (Attempt 2) is the scientifically meaningful version of this question and should be the one cited going forward if this GLMM is referenced anywhere. The gaze-cluster FDR result (cluster count and entropy both surviving correction) is a new, legitimate, previously-unreported finding from this round - worth folding into the next documentation pass alongside D045-D051's corrections, not mentioned in any prior entry.
+
+---
+
+## D053
+
+### Date
+2026-10-04
+
+### Decision
+Implemented Objective 3 prep, four parts, as small logical git commits (this is the first round with an actual git history - initialized one, scoped via `.gitignore` to exclude the vendored BeamNG engine, the vEVTrip venv, raw_data, and decoded EEG, since those are 70GB+ and not this project's own source). All four parts done without running anything on Windows/BeamNG, per the task's constraint.
+
+### Context / Problem
+Several open items from D018/D023 (RAG contamination), D021/D027/D031 (head-pose logging scoped but not written), and D022/D019's QC thresholds (proposed but never implemented as a runnable per-session check) needed turning into real artifacts before new data collection, without this session being able to touch the actual Windows/BeamNG workstation.
+
+### Evidence
+**1. RAG auto-clear (`backend/ai_assistant.py`).** `RAGStore.clear()` already existed (unused); `reset_session()` now calls it, guarded by a try/except so a clear failure can't crash session reset. Confirmed `reset_session()` really is called at the start of every session (`receive_ui.py:808`, on `Flowgraph`/`Started` - matches D018's original citation exactly, re-verified rather than assumed). The existing contaminated index (904 docs, D018/D023) was **copied** (not moved) to `backend/rag_index_archive/rag_index_20260803_contaminated_904docs/` before the change landed - `backend/rag_contaminated_sessions.json` (D029) untouched, still the authoritative exclusion list for the 38 already-affected sessions. Added `backend/test_reset_session_clears_rag.py` (4 unit tests, stdlib `unittest`, a lightweight fake `RAGStore` stand-in so the test doesn't need `sentence-transformers`/`faiss`, neither installed in this environment, and doesn't touch the real index on disk) - all 4 pass: clear-is-called, other session state still resets, `rag_store=None` tolerated, a `clear()` exception is caught not fatal.
+
+**2. Head-pose Lua hook (`BeamNG.tech.v0.38.3.0/lua/ge/extensions/evHeadPoseLogger.lua`) - marked UNTESTED in its own header, not quietly presented as working.** Buffers `core_camera.getPosition()`/`getQuat()` per simulation tick (confirmed-real API per D027/`lerpCamToKiosk.lua`) plus a `markCalibrationNod()` marker event (D031's calibration protocol), drained via the exact `queue_lua_command(..., response=True)` polling convention `evProjectBridge.lua`/`receive_ui.py`'s `_ui_listener` already use - deliberately does NOT assign its own wall-clock timestamp (D031: avoid a third clock domain; Python stamps on receipt, same as `interactions_*.csv`). Starts disabled by default (D024/D036's "additive, default-unchanged" convention). The header states plainly what's unverified: whether `onUpdate` fires at a rate that actually matches or exceeds gaze's ~199-200 Hz (D020), whether the buffer/drain JSON round-trip works through `queue_lua_command` at all, and general load-order/engine-version risk - none of this is checkable without the real Windows/BeamNG install.
+
+**3. Per-session QC script (`backend/pipeline/session_qc.py`).** Four checks, each threshold cited to the decision that set it (gaze valid-fraction ≥50%, D022; EEG flatline <15%, D019 - `not_available` kept distinct from `fail` since most sessions never had a Muse headband at all; ~15-25 `Reached` events, the mid-sem report's own Section 7.2 "about 15-20 per session"; head-pose file present, D021/D031 - will correctly `fail` for every one of the existing 140 sessions and for any new one until a **not-yet-written** Python-side consumer for the new Lua hook exists, stated as such rather than silently passing or silently failing without explanation). Smoke-tested read-only against 8+ real session folders (participants 001-008, 021) - correctly reproduced already-known facts without being told them in advance: 001-007 report EEG `not_available` (matches D008/D013's documented gap), participant 008's gaze fails the 50% threshold despite 88.8% `status==2` because `stability>0` cuts it to 28.3% (directly confirms D022's point that `stability` does most of the real filtering work, found independently by this script, not assumed from that entry).
+
+**4. Collection protocol (`backend/pipeline/NEW_DATA_COLLECTION_PROTOCOL.md`).** One page: schema (adds `headpose_*.csv` with a concretely specified column schema the not-yet-written Python consumer should target, plus **explicitly recording `incident_mode` per session** - a new recommendation this entry adds, since D045 found that flag changes `kiosk_attack`'s label vocabulary for the identical underlying attack, and a future collection batch that doesn't fix or record it risks reintroducing the same kind of labeling ambiguity D045 just spent several entries correcting), synchronization (restates D031's clock-domain decision and calibration-nod requirement as an operational step, not just a design note), calibration (adds a concrete pre-flight check - confirm `evHeadPoseLogger.getStatus()` reports `enabled=true` before trusting a session, given the hook is UNTESTED and defaults off), and QC timing (run `session_qc.py` immediately after each session, while the participant can still be asked to redo it, not batched for later).
+
+### Reason
+Each of the four was named explicitly in the task, and each builds on an already-established decision (D018/D019/D021/D022/D027/D029/D031/D045) rather than introducing new, undiscussed choices - the point of "prep" work is to turn things already decided into runnable artifacts, not to make new design calls unilaterally.
+
+### Alternatives Considered
+(a) Commit everything in one large commit rather than four small ones. (b) Skip adding a `.gitignore` and `git init` since the task didn't explicitly ask for repo setup, only "small logical commits." (c) For the QC script, silently treat `eeg`/`head_pose`'s `not_available` the same as `fail` for simplicity.
+
+### Why Alternatives Were Not Chosen
+(a) would defeat the explicit instruction ("make small logical commits") - one commit per task keeps each change reviewable and revertible independently (e.g. if the Lua hook needs rework after real-hardware testing, that revert shouldn't touch the RAG fix). (b) the task's instruction presupposes a working git history to commit into; this project had none (confirmed via `git status` before doing anything), so setting one up properly (with a `.gitignore` sized to avoid trying to track 70GB of vendored engine/data) was a necessary, not optional, first step - done as its own commit, not folded into Task 1's. (c) would conflate "this modality wasn't collected" with "this modality was collected and is bad" - exactly the kind of false-failure that would make the QC report useless for the 73 non-EEG-qualified sessions going forward.
+
+### Implementation
+Five commits on a newly-initialized `main` branch: repo scaffold + `.gitignore`, RAG auto-clear + unit test, the UNTESTED Lua hook, the QC script, the protocol doc. No raw data touched; the one existing mutable artifact this round's work is near (`backend/rag_index/`) was copied, not altered, before the code change that will cause it to be cleared on next real session start.
+
+### Status
+Implemented (RAG fix, QC script, protocol doc - all run/tested where testable in this environment); the Lua hook: Implemented but explicitly UNTESTED, same status category as D027/D031's own scoped-but-unvalidated proposals
+
+### Impact
+Objective 2 (RAG contamination fix), Objective 3 (new data collection - all four parts), Experimental design
+
+### Remarks
+**The Python-side consumer for `evHeadPoseLogger.lua`'s `drainBuffer()`/`markCalibrationNod()` is the next concrete piece of work this unblocks, not yet written** - `session_qc.py`'s head-pose check and the protocol doc's schema both already specify exactly what it should produce (`headpose_*.csv` with the 8 named columns), so that implementation has a target to write to rather than needing its own design pass. Until a real Windows/BeamNG session runs with this hook enabled, every claim about its behavior remains exactly as uncertain as the file header says - this entry does not upgrade its status, only records that it now exists and is scoped.
