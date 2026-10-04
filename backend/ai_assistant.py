@@ -121,6 +121,16 @@ class AIAssistant:
         self.screenshot_history = {}
         self.current_screenshot_context = None
         self.current_screenshot_station = None
+        # D053: RAGStore previously persisted across every participant's session
+        # (D018/D023 - confirmed to have contaminated all 38 sessions that used
+        # the AI assistant). reset_session() is called at the start of every new
+        # participant (receive_ui.py, on "Flowgraph Started"), so clearing here
+        # makes a fresh, uncontaminated store the default going forward.
+        if self.rag_store is not None:
+            try:
+                self.rag_store.clear()
+            except Exception as e:
+                print(f"[AI Assistant] RAG store clear failed in reset_session(): {e}")
 
     def _normalize_station_key(self, trial: Any) -> str:
         try:
