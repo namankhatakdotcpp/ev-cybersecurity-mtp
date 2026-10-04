@@ -1,0 +1,34 @@
+{
+  "trained_at": "2026-10-04T15:05:30",
+  "feature_cols": [
+    "window_duration_s",
+    "ai_help_used",
+    "gaze_n_fixations",
+    "gaze_n_clusters",
+    "gaze_n_transitions",
+    "gaze_transitions_per_fixation",
+    "gaze_dispersion",
+    "gaze_entropy_bits"
+  ],
+  "feature_set_name": "behaviour+gaze (no rag_contaminated)",
+  "n_training_rows": 1057,
+  "n_training_participants": 122,
+  "risky_label_rate": 0.3538,
+  "in_sample_accuracy": 1.0,
+  "held_out_performance_DO_NOT_USE_in_sample_stats_instead": {
+    "source": "Decision.md D050 (random-split and time-ordered protocols) and D047/D048 (seed/cutoff sensitivity)",
+    "balanced_accuracy_range": [
+      0.57,
+      0.65
+    ],
+    "auroc_range": [
+      0.62,
+      0.7
+    ],
+    "note": "Point estimates and 95% CIs are in D050's table - do not quote a single number without the CI."
+  },
+  "model_type": "RandomForestClassifier(n_estimators=200, class_weight='balanced')",
+  "random_state": 42,
+  "sklearn_version": "1.6.1",
+  "warning": "Trained on post-hoc, full-session feature extraction (build_feature_table.py). NOT validated against live/real-time-computed features - see warning_system.py."
+}
