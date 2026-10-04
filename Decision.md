@@ -2268,3 +2268,46 @@ Objective 2 (RAG contamination fix), Objective 3 (new data collection - all four
 
 ### Remarks
 **The Python-side consumer for `evHeadPoseLogger.lua`'s `drainBuffer()`/`markCalibrationNod()` is the next concrete piece of work this unblocks, not yet written** - `session_qc.py`'s head-pose check and the protocol doc's schema both already specify exactly what it should produce (`headpose_*.csv` with the 8 named columns), so that implementation has a target to write to rather than needing its own design pass. Until a real Windows/BeamNG session runs with this hook enabled, every claim about its behavior remains exactly as uncertain as the file header says - this entry does not upgrade its status, only records that it now exists and is scoped.
+
+---
+
+## D054
+
+### Date
+2026-10-04
+
+### Decision
+Wrote the Python-side consumer for `evHeadPoseLogger.lua` that D053 left as the next concrete piece of work. A new `_headpose_worker` thread in `receive_ui.py`, matching the existing odometer/UI-listener worker pattern exactly, drains the Lua buffer and writes `headpose_<run_stamp>.csv` in the schema `session_qc.py`/the protocol doc already specified. **Off by default** (`head_pose_logging_enabled: False`) - the Lua side is still UNTESTED, so this consumer must be opted into deliberately, not silently active. 8 unit tests cover everything testable without a real BeamNG connection; the actual Lua round-trip remains unverified.
+
+### Context / Problem
+D053's remarks named this as the next unblocked piece of work and specified the target schema in advance. Writing the consumer against that pre-specified schema, rather than designing both ends together, is what let this be built and tested in isolation from the still-unverified Lua side.
+
+### Evidence
+**Threading/polling pattern matched to the existing code, not invented**: `_start_headpose_worker()`/`_headpose_worker()` mirror `_start_odometer_worker()`/`_odometer_worker()` exactly (idempotent start guard, `threading.Event` stop signal, `time.sleep(0.2)` = 5 Hz poll cadence, broad `except Exception` per iteration so one bad poll doesn't kill the thread) - the 5 Hz cadence is explicitly flagged in a comment as unvalidated for fixation-level work, not silently presented as sufficient. `queue_lua_command('return extensions.evHeadPoseLogger.drainBuffer()', response=True)` uses the identical call convention `evProjectBridge.lua`/`_ui_listener` already use (re-verified by reading that code again, not assumed from D053's own description of it).
+
+**Extension loading and enable/disable wired at the right lifecycle points, gated by the new config flag throughout**: `open()` loads the Lua extension (parallel to how `evProjectBridge` is loaded) only if `head_pose_logging_enabled`; `_on_flowgraph_started` calls `_start_headpose_worker()` (which itself calls `evHeadPoseLogger.setEnabled(true)` before starting the thread) alongside the existing `_start_odometer_worker()` call; `stop()` signals the thread to stop, joins it, calls `setEnabled(false)`, and closes the CSV file - matching the existing shutdown sequence's structure and its per-step `try/except` isolation (one failed cleanup step doesn't block the rest).
+
+**Timestamp reconstruction implemented exactly as D031 scoped it, with its own approximation stated plainly in the code, not hidden**: the Lua buffer carries `dtSim` (gap since the previous sample) but no wall-clock value, by design (avoid a third clock domain). `_handle_headpose_batch` anchors the batch's LAST sample to `datetime.now()` at receipt and walks backward through `dtSim` for the rest - the docstring states directly that the receipt-time anchor itself has unmeasured Lua-to-Python latency, and that this is acceptable for session-level work on the same precedent as D020/D026/D045 but NOT validated for fixation-level precision, which is exactly what the protocol's calibration-nod step exists to measure rather than assume.
+
+**8 unit tests (`backend/test_headpose_consumer.py`), all passing, covering everything testable without a real BeamNG connection** (confirmed `beamngpy`'s constructor doesn't connect until `.open()`, so `EVBackend` can be constructed and its new methods exercised directly): CSV header matches the declared 9-column schema; a 3-sample batch produces 3 rows with correct position values; reconstructed timestamps are monotonically increasing and land within ~2ms of the expected 10ms spacing from `dtSim`, with the last sample anchored within 1s of wall-clock now; a `marker` field round-trips correctly (empty string when absent); an empty batch (`"[]"`), a Lua `"nil"` response, and malformed JSON are all handled without raising; `head_pose_logging_enabled` defaults to `False` and no header CSV gets created in that case. Installed `beamngpy` and `sounddevice` (both missing from this environment, both needed just to *import* `receive_ui.py`) to make this test importable at all - a real, previously-unknown environment gap, not assumed to already work.
+
+### Reason
+Writing the consumer against D053's pre-specified schema (rather than guessing at both ends simultaneously) kept this round's scope honest about what actually got validated: the data-handling logic has real, passing tests; the Lua-to-Python wire protocol and the Lua side itself still do not, and the commit message/docstrings say so explicitly rather than letting 8 green tests imply more than they cover.
+
+### Alternatives Considered
+(a) Default `head_pose_logging_enabled` to `True` now that a consumer exists, so new sessions start collecting head pose immediately. (b) Skip writing tests since the Lua side can't be tested anyway, on the reasoning that partial test coverage might overstate confidence. (c) Have the Lua side assign its own timestamp (simpler consumer code) rather than reconstructing from `dtSim`.
+
+### Why Alternatives Were Not Chosen
+(a) would silently start depending on an UNTESTED Lua extension for real data collection - exactly what D053's own default-off choice was protecting against; nothing changed about the Lua side's verification status by writing its consumer. (b) is backwards - the consumer's pure-Python logic (timestamp math, CSV schema, error handling) is independently testable and was actually wrong on the first attempt in a less severe way during development (an early draft anchored off `time.time()` inconsistently) - skipping tests here would have meant shipping unverified code in the one place verification was actually possible this round. (c) would reintroduce the third-clock-domain risk D031 specifically ruled out - a BeamNG Lua timestamp is not guaranteed to agree with the Python backend's wall clock even on one machine, which is the whole reason this design was chosen over the simpler alternative.
+
+### Implementation
+`backend/receive_ui.py` (`_init_headpose_log`, `_start_headpose_worker`, `_headpose_worker`, `_handle_headpose_batch`, plus wiring in `__init__`, `open()`, `_on_flowgraph_started`, `stop()`). `backend/test_headpose_consumer.py` added (8 tests, all passing). One commit.
+
+### Status
+Implemented; Verified (all consumer-side data handling, by real passing tests); the Lua round-trip and `evHeadPoseLogger.lua` itself: still UNTESTED, unchanged from D053 - this entry does not and cannot upgrade that status
+
+### Impact
+Objective 3 (new data collection), Experimental design
+
+### Remarks
+**What's left before this can be used for real collection, stated plainly**: (1) load `evHeadPoseLogger.lua` into an actual running BeamNG.tech instance and confirm `onUpdate` fires and `drainBuffer()`/`markCalibrationNod()` round-trip through `queue_lua_command` at all - zero evidence either way exists yet; (2) run the calibration-nod protocol for real and measure the actual Lua-to-Python receipt-time offset, to know whether the approximation this entry's docstring flags is small enough for fixation-level use; (3) only then flip `head_pose_logging_enabled` to `True` for a real session. None of this is blocked on more code from this session - it is blocked on the Windows/BeamNG workstation, same standing constraint as D004/D027/D041.
