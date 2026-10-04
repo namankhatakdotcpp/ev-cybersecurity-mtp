@@ -1,5 +1,15 @@
 # Vendored engine install and venvs - large, not our source
-BeamNG.tech.v0.38.3.0/
+BeamNG.tech.v0.38.3.0/*
+# ...except our own additive Lua extensions, which are project source code
+# (un-ignore each intermediate directory level too - git won't descend into
+# an ignored directory to apply a deeper negation otherwise)
+!BeamNG.tech.v0.38.3.0/lua/
+BeamNG.tech.v0.38.3.0/lua/*
+!BeamNG.tech.v0.38.3.0/lua/ge/
+BeamNG.tech.v0.38.3.0/lua/ge/*
+!BeamNG.tech.v0.38.3.0/lua/ge/extensions/
+BeamNG.tech.v0.38.3.0/lua/ge/extensions/*
+!BeamNG.tech.v0.38.3.0/lua/ge/extensions/evHeadPoseLogger.lua
 backend/vEVTrip/
 
 # Raw/derived data - large, participant data, not source code
