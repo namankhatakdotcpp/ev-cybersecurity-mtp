@@ -30,5 +30,91 @@
   "model_type": "RandomForestClassifier(n_estimators=200, class_weight='balanced')",
   "random_state": 42,
   "sklearn_version": "1.6.1",
-  "warning": "Trained on post-hoc, full-session feature extraction (build_feature_table.py). NOT validated against live/real-time-computed features - see warning_system.py."
+  "warning": "Trained on post-hoc, full-session feature extraction (build_feature_table.py). NOT validated against live/real-time-computed features - see warning_system.py.",
+  "calibration": {
+    "method": "Platt/sigmoid scaling (LogisticRegression on raw probability), chosen over isotonic regression for usable spread - see module docstring",
+    "n_calibration_pairs": 1057,
+    "raw_brier_score_held_out": 0.2177,
+    "isotonic_brier_score_nested_cv": 0.2067,
+    "platt_brier_score_nested_cv": 0.2153,
+    "always_predict_base_rate_brier": 0.2286,
+    "raw_calibration_curve": [
+      {
+        "mean_predicted": 0.0082,
+        "observed_frequency": 0.0147
+      },
+      {
+        "mean_predicted": 0.1177,
+        "observed_frequency": 0.1832
+      },
+      {
+        "mean_predicted": 0.2672,
+        "observed_frequency": 0.4328
+      },
+      {
+        "mean_predicted": 0.3476,
+        "observed_frequency": 0.471
+      },
+      {
+        "mean_predicted": 0.417,
+        "observed_frequency": 0.4098
+      },
+      {
+        "mean_predicted": 0.4761,
+        "observed_frequency": 0.4211
+      },
+      {
+        "mean_predicted": 0.5428,
+        "observed_frequency": 0.4627
+      },
+      {
+        "mean_predicted": 0.6491,
+        "observed_frequency": 0.4419
+      }
+    ],
+    "platt_calibration_curve_nested_cv": [
+      {
+        "mean_predicted": 0.1763,
+        "observed_frequency": 0.0226
+      },
+      {
+        "mean_predicted": 0.2229,
+        "observed_frequency": 0.188
+      },
+      {
+        "mean_predicted": 0.2929,
+        "observed_frequency": 0.4621
+      },
+      {
+        "mean_predicted": 0.3399,
+        "observed_frequency": 0.447
+      },
+      {
+        "mean_predicted": 0.382,
+        "observed_frequency": 0.4122
+      },
+      {
+        "mean_predicted": 0.421,
+        "observed_frequency": 0.4242
+      },
+      {
+        "mean_predicted": 0.4636,
+        "observed_frequency": 0.4621
+      },
+      {
+        "mean_predicted": 0.535,
+        "observed_frequency": 0.4167
+      }
+    ],
+    "new_thresholds": {
+      "low": 0.25,
+      "high": 0.5
+    },
+    "operating_point_at_these_thresholds": {
+      "fraction_low": 0.2289,
+      "fraction_high": 0.105,
+      "fraction_would_warn": 0.7711
+    },
+    "note": "predict_risk() now applies this Platt calibrator to the raw RandomForest output - see risk_model.py"
+  }
 }
