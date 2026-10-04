@@ -2360,3 +2360,56 @@ Objective 2 (Step 12 of the pipeline, previously 0%), Objective 3 (this is the a
 
 ### Remarks
 **What remains before this scaffold could become a live system, stated as a checklist, not a vague "more work needed"**: (1) a real-time (or near-real-time, incremental) gaze-feature computation path - does not exist anywhere in this project yet, for either the existing external gaze-capture application or the new head-pose stream; (2) recalibrate the risk thresholds against real Step-13 user-response data once it exists, not the provisional training-distribution percentiles used here; (3) decide, with the mentor, whether a RandomForest trained on 140-session post-hoc features is the right model to trust for a live warning at all, versus retraining once new, prospectively-collected data (with head pose, with a cleaner gaze pipeline) is available - this scaffold's model is explicitly NOT assumed to be the final one, just the best currently-validated starting point.
+
+---
+
+## D056
+
+### Date
+2026-10-04
+
+### Decision
+Built `backend/gaze_online.py`, closing the specific gap D055's remarks named first: no real-time gaze-feature computation exists anywhere in this project. A `GazeOnlineProcessor` maintains a trailing window buffer and recomputes the AOI-free cluster features (D025/D030) on demand, reusing the offline pipeline's own functions directly rather than reimplementing them. Validated by replaying 5 real sessions sample-by-sample: exact agreement with the offline computation when the buffer covers a whole decision window (asserted, passes); a real, substantial, and expected divergence on realistic (mostly >3s) windows (measured and reported, not hidden behind a pass/fail tolerance). Ingest latency is trivial (~0.2us); feature-recompute latency is comfortably inside a 5 Hz polling budget on this Mac, with a tail worth watching.
+
+### Context / Problem
+D055's own remarks named the missing real-time gaze-feature path as the first item blocking this project's warning-system scaffold from ever being live-wired. This task closed it, on the Mac, without needing the lab workstation.
+
+### Evidence
+**Two-stage API, chosen deliberately, not the "one `add_sample` call" the initial draft used.** The first implementation recomputed features on every single ingested sample; replaying even one session's decision windows at that design made each window's per-sample cost scale with however many samples had already accumulated in it (a 100-second, ~20,000-sample window recomputing a full DataFrame+I-VT+DBSCAN pass on every one of those samples) - the test run was killed after exceeding 2 minutes without finishing on the FIRST session alone. Refactored into `ingest()` (O(eviction), meant for every raw sample) and `compute_features()` (the real cost, meant to be called at a consumer's own polling cadence) before measuring anything further - catching and fixing this design flaw itself produced the honest "per-sample latency" number the task asked for, rather than a number from a design nobody would actually deploy.
+
+**Correctness, reused not reimplemented**: `GazeOnlineProcessor.compute_features()` imports `fixations_in_window`/`gaze_features` directly from `build_feature_table.py` - the online and offline paths run literally the same I-VT (30°/s velocity threshold, 100ms minimum fixation) and DBSCAN (eps=0.08) code, so any difference between them is a difference in *which* samples are in the window, not a difference in algorithm. `ExactAgreementOnShortWindowsTest` verifies this directly on real data (not synthetic): ingests a real session's decision-window samples with a buffer sized to cover the entire window (nothing evicted), confirms the online result matches the offline whole-window computation exactly on every integer feature and to 6 decimal places on `gaze_dispersion` - passes.
+
+**Replay harness, 5 real sessions (participants 001-005, the first 5 discoverable sessions with gaze data - a deterministic, reproducible choice, not hand-picked), 56 decision windows total:**
+
+| | ingest() | compute_features() (simulated 5 Hz poll) |
+|---|---|---|
+| n calls | 267,536 | 6,720 |
+| mean | 0.2us | 0.645ms |
+| median | 0.2us | 0.680ms |
+| p95 | 0.5us | 0.940ms |
+| max | 0.112ms | 24.713ms |
+
+At a 5 Hz poll cadence (this project's existing polling rate throughout - odometer/UI/head-pose workers, D053/D054), the 200ms/call budget is comfortably met even at the max observed `compute_features()` cost - but that max is ~38x the mean, worth flagging as a tail-latency risk if this is ever polled faster, not smoothed over by only reporting the mean.
+
+**Divergence between online (3s trailing snapshot) and offline (whole decision window), reported not asserted, since it's expected, not a bug**: only 1 of the 56 real decision windows was ≤3s (the window_s default) - 55 were longer, most substantially (window durations up to ~100s observed). Mean absolute difference across those 55: `gaze_n_clusters`=3.18, `gaze_entropy_bits`=0.79 bits, `gaze_transitions_per_fixation`=0.29 - a 3-second snapshot of a 60-second decision window is measuring a genuinely different thing than the whole window's summary, and the honest finding is the *size* of that difference, not a pass/fail verdict that would have to either be meaninglessly loose or fail for a non-bug reason.
+
+### Reason
+Catching the O(buffer-size) recomputation design before reporting any latency number was the only way to answer "per-sample latency" honestly - the first design's number would have been a real measurement of a design nobody should deploy, not a useful one. Reporting the online/offline divergence as a measured distribution (not a tolerance-gated assertion) follows the same standing practice this project has used for every other "does X survive scrutiny" check this round (D047/D048/D050's bootstrap CIs and sensitivity sweeps, not a single pass/fail number).
+
+### Alternatives Considered
+(a) Keep the single-call `add_sample` design and just accept slower tests / report latency as-measured on that design. (b) Shrink the replay to very short synthetic windows so online and offline would trivially agree everywhere, avoiding the need to report a real divergence. (c) Assert a fixed tolerance (e.g. "online within 20% of offline") instead of reporting raw mean/max absolute differences.
+
+### Why Alternatives Were Not Chosen
+(a) would have shipped a real, deployable-looking module with a latency profile nobody would actually accept, and reported that as "the" per-sample cost rather than catching the actual design problem. (b) would have avoided ever surfacing the (real, important) finding that most of this project's decision windows are far longer than a 3-second trailing buffer - information anyone calibrating `window_s` for a live system needs, not something to engineer around testing. (c) is exactly the "assert a tolerance instead of reporting the real number" failure mode the task explicitly warned against - a passing tolerance assertion would have hidden how large the online/offline gap actually is on real data.
+
+### Implementation
+Two commits: `backend/gaze_online.py` (the processor), `backend/test_gaze_online.py` (replay harness, exact-agreement test, smoke test, and a `--report` mode producing the numbers above - rerunnable with `python3 test_gaze_online.py --report`).
+
+### Status
+Implemented; Verified (exact-agreement test passes on real data; latency and divergence numbers are real measurements, not estimates) - never run against a live gaze stream, only replayed logs, stated as such throughout
+
+### Impact
+Objective 2 (the warning-system scaffold, D055, previously blocked on exactly this), Objective 3 (new data collection's eventual live use)
+
+### Remarks
+**What this does and doesn't unblock, stated precisely**: this closes the "no real-time feature computation exists" gap for the EXISTING gaze pipeline's own algorithm - `warning_system.py` could now, in principle, be fed a live `compute_features()` call instead of only `score_session_offline()`. It does NOT mean a live gaze stream exists to feed it - D027's finding stands unchanged: no connection from the external gaze-capture application into this project's Python backend has ever been found or built. The remaining gap before any live warning is possible is exactly that connection, not more feature-computation work. Separately worth noting for whoever tunes `window_s` later: a 3s default captures only the tail of almost every real decision window observed here (55/56 longer than that) - if a live system wants the trailing window to resemble "most of the decision so far" rather than "just the last few seconds," a materially larger `window_s` (or an adaptive one, anchored to when the current station was reached) should be considered, not assumed from this default.
