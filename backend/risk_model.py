@@ -16,11 +16,22 @@ gaze_transitions_per_fixation, gaze_dispersion, gaze_entropy_bits. All gaze
 features are the D025/D030-validated AOI-free set - never the AOI-anchored
 dwell/TTFF features, which remain unrecoverable on this project's existing
 data (D021/D026/D030).
+
+Calibration (D057): predict_risk() returns the Platt/sigmoid-calibrated
+probability when the artifact has a calibrator attached (run
+backend/pipeline/calibrate_risk_model.py --save to add one), falling back to
+the raw RandomForest output otherwise - so this class works against an
+uncalibrated artifact too, it just reports which mode it's in via
+`self.is_calibrated`. Isotonic calibration was tried and rejected (D057) for
+collapsing the usable probability range too far to support meaningful
+thresholds - Platt was chosen specifically because its calibrated output
+stays interpretable enough to threshold against.
 """
 import os
 from typing import Any, Dict, Optional
 
 import joblib
+import numpy as np
 
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_MODEL_PATH = os.path.join(_THIS_DIR, "pipeline", "model", "risk_model.joblib")
@@ -38,25 +49,34 @@ class RiskModel:
         self.imputer = artifact["imputer"]
         self.scaler = artifact["scaler"]
         self.feature_cols = artifact["feature_cols"]
+        self.calibrator = artifact.get("calibrator")
+        self.is_calibrated = self.calibrator is not None
 
-    def predict_risk(self, features: Dict[str, Optional[float]]) -> float:
-        """Returns P(risky decision) in [0, 1]. `features` must have a key
-        for every column in self.feature_cols - missing/None values are
-        imputed (median, fit at training time), not silently zero-filled, per
-        the project's standing missingness rule (Phase 1 schema,
-        backend/pipeline/SCHEMA.md)."""
-        missing = [c for c in self.feature_cols if c not in features]
-        if missing:
-            raise ValueError(f"predict_risk: missing required features: {missing}")
-        row = [[features[c] for c in self.feature_cols]]
-        imputed = self.imputer.transform(row)
+    def _raw_proba(self, matrix) -> "np.ndarray":
+        imputed = self.imputer.transform(matrix)
         scaled = self.scaler.transform(imputed)
-        proba = self.model.predict_proba(scaled)[0]
+        proba = self.model.predict_proba(scaled)
         # predict_proba's column order follows self.model.classes_, not
         # assumed to be [0, 1] - looked up explicitly so this is correct even
         # if sklearn ever changes that convention.
         classes = list(self.model.classes_)
-        return float(proba[classes.index(1)])
+        return proba[:, classes.index(1)]
+
+    def predict_risk(self, features: Dict[str, Optional[float]]) -> float:
+        """Returns P(risky decision) in [0, 1] - Platt-calibrated if a
+        calibrator is attached (self.is_calibrated), raw RandomForest output
+        otherwise. `features` must have a key for every column in
+        self.feature_cols - missing/None values are imputed (median, fit at
+        training time), not silently zero-filled, per the project's standing
+        missingness rule (Phase 1 schema, backend/pipeline/SCHEMA.md)."""
+        missing = [c for c in self.feature_cols if c not in features]
+        if missing:
+            raise ValueError(f"predict_risk: missing required features: {missing}")
+        row = [[features[c] for c in self.feature_cols]]
+        raw = self._raw_proba(row)
+        if self.calibrator is not None:
+            return float(self.calibrator.predict_proba(raw.reshape(-1, 1))[0, 1])
+        return float(raw[0])
 
     def predict_risk_batch(self, rows: list) -> list:
         """Same as predict_risk but for a list of feature dicts - avoids
@@ -65,11 +85,8 @@ class RiskModel:
             missing = [c for c in self.feature_cols if c not in features]
             if missing:
                 raise ValueError(f"predict_risk_batch: row {i} missing features: {missing}")
-        import numpy as np
         matrix = [[r[c] for c in self.feature_cols] for r in rows]
-        imputed = self.imputer.transform(matrix)
-        scaled = self.scaler.transform(imputed)
-        proba = self.model.predict_proba(scaled)
-        classes = list(self.model.classes_)
-        idx = classes.index(1)
-        return [float(p[idx]) for p in proba]
+        raw = self._raw_proba(matrix)
+        if self.calibrator is not None:
+            return [float(p) for p in self.calibrator.predict_proba(raw.reshape(-1, 1))[:, 1]]
+        return [float(p) for p in raw]
