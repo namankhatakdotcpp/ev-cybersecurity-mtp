@@ -70,6 +70,11 @@ class EVBackend:
             'coupon_code_image_prob': 0.8,
             'cyber_attack_no_charge_probability': 0.2,
             'cyber_attack_reduced_charge_probability': 0.8,
+            # D053: off by default - evHeadPoseLogger.lua is UNTESTED (never
+            # loaded into a real BeamNG instance). Opt in explicitly via
+            # experiment_config once it's been validated on the real
+            # workstation (NEW_DATA_COLLECTION_PROTOCOL.md's pre-flight check).
+            'head_pose_logging_enabled': False,
         }
         if isinstance(experiment_config, dict):
             for key, value in experiment_config.items():
@@ -113,6 +118,15 @@ class EVBackend:
         self.odo_stop = threading.Event()
         self.odo_thread: Optional[threading.Thread] = None
 
+        # Head-pose worker thread (D053 - Python-side consumer for
+        # evHeadPoseLogger.lua, UNTESTED end to end - see that file's header)
+        self.headpose_stop = threading.Event()
+        self.headpose_thread: Optional[threading.Thread] = None
+        self.headpose_log_lock = threading.Lock()
+        self.headpose_log_file = None
+        self.headpose_log_writer = None
+        self.headpose_log_path: Optional[Path] = None
+
         # Odometer and motion filtering
         self.odometer_total = 0.0
         self.prev_pos: Optional[Tuple[float, float, float]] = None
@@ -132,7 +146,10 @@ class EVBackend:
         self.log_file = None
         self.log_writer = None
         self.log_path: Optional[Path] = None
+        self._run_stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         self._init_interaction_log()
+        if self.config.get('head_pose_logging_enabled'):
+            self._init_headpose_log()
 
     def _init_interaction_log(self) -> None:
         if self.interaction_log_dir:
@@ -140,7 +157,7 @@ class EVBackend:
         else:
             logs_dir = Path(__file__).resolve().parent / 'interaction_logs'
         logs_dir.mkdir(parents=True, exist_ok=True)
-        run_stamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        run_stamp = self._run_stamp
         self.log_path = logs_dir / f'interactions_{run_stamp}.csv'
         self.log_file = open(self.log_path, 'w', newline='', encoding='utf-8')
         self.log_writer = csv.writer(self.log_file)
@@ -159,6 +176,28 @@ class EVBackend:
         ])
         self.log_file.flush()
         print(f'[backend] Interaction log file: {self.log_path}')
+
+    def _init_headpose_log(self) -> None:
+        """D053: Python-side consumer for evHeadPoseLogger.lua. Writes the
+        exact schema session_qc.py and NEW_DATA_COLLECTION_PROTOCOL.md already
+        specify - same directory and run_stamp as the interaction log, so the
+        two files are trivially pairable per session."""
+        if self.interaction_log_dir:
+            logs_dir = Path(self.interaction_log_dir)
+        else:
+            logs_dir = Path(__file__).resolve().parent / 'interaction_logs'
+        logs_dir.mkdir(parents=True, exist_ok=True)
+        self.headpose_log_path = logs_dir / f'headpose_{self._run_stamp}.csv'
+        self.headpose_log_file = open(self.headpose_log_path, 'w', newline='', encoding='utf-8')
+        self.headpose_log_writer = csv.writer(self.headpose_log_file)
+        self.headpose_log_writer.writerow([
+            'timestamp_unix_ms',
+            'pos_x', 'pos_y', 'pos_z',
+            'quat_x', 'quat_y', 'quat_z', 'quat_w',
+            'marker',
+        ])
+        self.headpose_log_file.flush()
+        print(f'[backend] Head-pose log file: {self.headpose_log_path} (UNTESTED path - D053)')
 
     def _log_interaction(
         self,
@@ -816,6 +855,7 @@ class EVBackend:
         self._publish_charge_state(force=True)
 
         self._start_odometer_worker()
+        self._start_headpose_worker()
 
     def _odometer_worker(self) -> None:
         while not self.odo_stop.is_set():
@@ -857,6 +897,89 @@ class EVBackend:
 
             time.sleep(0.2)
 
+    # ------------------------ Head-pose worker (thread) ------------------------
+    # D053: Python-side consumer for evHeadPoseLogger.lua. Polls at the same
+    # 5 Hz cadence as the odometer/UI workers (not validated as sufficient for
+    # fixation-level analysis - that needs the real-hardware calibration-nod
+    # check, D031/NEW_DATA_COLLECTION_PROTOCOL.md, not assumed here). The Lua
+    # side is UNTESTED end to end; this consumer has never been run against it.
+    def _start_headpose_worker(self) -> None:
+        if not self.config.get('head_pose_logging_enabled'):
+            return
+        if self.headpose_thread and self.headpose_thread.is_alive():
+            return
+        try:
+            self.bng.control.queue_lua_command('extensions.evHeadPoseLogger.setEnabled(true)')
+        except Exception as e:
+            print('[backend] Failed to enable evHeadPoseLogger capture:', e)
+            return
+        self.headpose_stop.clear()
+        self.headpose_thread = threading.Thread(target=self._headpose_worker, daemon=True)
+        self.headpose_thread.start()
+
+    def _headpose_worker(self) -> None:
+        while not self.headpose_stop.is_set():
+            try:
+                raw = self.bng.control.queue_lua_command(
+                    'return extensions.evHeadPoseLogger.drainBuffer()', response=True)
+                self._handle_headpose_batch(raw)
+            except Exception as e:
+                print('[backend] Error polling evHeadPoseLogger:', e)
+
+            time.sleep(0.2)
+
+    def _handle_headpose_batch(self, raw) -> None:
+        """Parse one drainBuffer() response and write it to headpose_*.csv.
+
+        Timestamp reconstruction (D031's design, implemented here for the
+        first time - UNTESTED): the Lua side deliberately does NOT assign its
+        own wall-clock timestamp, to avoid a third clock domain alongside gaze
+        and interactions (see evHeadPoseLogger.lua's header). Each sample
+        instead carries `dtSim`, the simulation-time gap since the PREVIOUS
+        sample in the same buffer. This function anchors the LAST (most
+        recent) sample to `datetime.now()` at receipt time - the same
+        wall-clock convention interactions_*.csv already uses - then walks
+        backward through the batch subtracting each sample's own `dtSim` to
+        reconstruct the rest. This anchor is itself an approximation (there is
+        real, unmeasured latency between the last tick firing in BeamNG and
+        this Python call receiving its response) - acceptable for session-level
+        alignment on the same precedent as D020/D026/D045, NOT yet validated
+        for fixation-level precision, which is exactly what the protocol's
+        calibration-nod step exists to measure empirically rather than assume.
+        """
+        if not raw or raw == 'nil':
+            return
+        try:
+            samples = json.loads(raw) if isinstance(raw, str) else raw
+        except Exception as e:
+            print('[backend] Head-pose batch JSON decode failed:', e)
+            return
+        if not samples:
+            return
+        if not self.headpose_log_writer or not self.headpose_log_file:
+            return
+
+        now_ms = int(datetime.now().timestamp() * 1000)
+        timestamps_ms = [0] * len(samples)
+        t = float(now_ms)
+        for i in range(len(samples) - 1, -1, -1):
+            timestamps_ms[i] = int(round(t))
+            dt_sim = samples[i].get('dtSim') or 0
+            t -= float(dt_sim) * 1000.0
+
+        with self.headpose_log_lock:
+            for i, s in enumerate(samples):
+                try:
+                    self.headpose_log_writer.writerow([
+                        timestamps_ms[i],
+                        s.get('px'), s.get('py'), s.get('pz'),
+                        s.get('qx'), s.get('qy'), s.get('qz'), s.get('qw'),
+                        s.get('marker') or '',
+                    ])
+                except Exception as e:
+                    print('[backend] Failed to write head-pose row:', e)
+            self.headpose_log_file.flush()
+
     # ------------------------ Connection / scenario ------------------------
     def open(self, launch: bool = True) -> None:
         print('[backend] Connecting to BeamNG...')
@@ -870,6 +993,16 @@ class EVBackend:
             time.sleep(0.2)
         except Exception:
             pass
+
+        # D053: evHeadPoseLogger is opt-in (config flag, off by default) and
+        # UNTESTED - load it but leave capture disabled; _on_flowgraph_started
+        # is where it actually gets turned on, for a session that opted in.
+        if self.config.get('head_pose_logging_enabled'):
+            try:
+                self.bng.control.queue_lua_command('extensions.load("evHeadPoseLogger")')
+                time.sleep(0.2)
+            except Exception as e:
+                print('[backend] Failed to load evHeadPoseLogger extension:', e)
 
     # ------------------------ UI listener (thread) ------------------------
     def start_ui_listener(self) -> None:
@@ -1001,6 +1134,20 @@ class EVBackend:
         except Exception:
             pass
         try:
+            self.headpose_stop.set()
+        except Exception:
+            pass
+        try:
+            if self.headpose_thread:
+                self.headpose_thread.join(timeout=1.0)
+        except Exception:
+            pass
+        try:
+            if self.config.get('head_pose_logging_enabled'):
+                self.bng.control.queue_lua_command('extensions.evHeadPoseLogger.setEnabled(false)')
+        except Exception:
+            pass
+        try:
             self.assistant_speech.stop()
         except Exception:
             pass
@@ -1011,6 +1158,11 @@ class EVBackend:
         try:
             if self.log_file:
                 self.log_file.close()
+        except Exception:
+            pass
+        try:
+            if self.headpose_log_file:
+                self.headpose_log_file.close()
         except Exception:
             pass
 
