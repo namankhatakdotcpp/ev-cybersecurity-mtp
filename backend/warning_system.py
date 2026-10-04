@@ -49,12 +49,18 @@ concrete, checked reason, not a vague caveat:
   system WOULD have said, not for showing a participant a warning live.
 ====================================================================
 
-Risk thresholds below are a STARTING POINT, not a calibrated decision
-boundary - they come from the trained model's own (overfit, in-sample)
-probability distribution, not from any real user-response data, because none
+Risk thresholds below are UPDATED (D057) from held-out, Platt-calibrated
+probabilities (5-fold participant-level GroupKFold OOF, nested CV for the
+calibration itself) - a real improvement over D055's original thresholds,
+which came from the model's own overfit in-sample distribution. They are
+still NOT validated against any real user-response data, because none
 exists yet (that's precisely mid-sem report Step 13, "User Response and
-Trust" - not started, per last round's report). Recalibrate against real
-data once Step 13 is actually run.
+Trust" - not started). At these thresholds, measured on held-out data: ~23%
+of decisions score "low" (no warning), ~10% score "high", ~77% would trigger
+should_warn (medium+high) - a real, measured consequence of this model's
+current discriminative power (AUROC~0.6-0.7), not a bug. Recalibrate the
+OPERATING POINT (not just refit the probabilities) against real data once
+Step 13 is actually run, if a lower warning rate is wanted.
 """
 import json
 import os
@@ -64,11 +70,13 @@ from typing import Any, Dict, Optional
 
 from risk_model import RiskModel
 
-# Provisional, uncalibrated - see module docstring. Derived from this
-# project's own trained model's probability distribution (33rd/66th
-# percentile, rounded), not from any outcome data.
-RISK_THRESHOLD_LOW = 0.20
-RISK_THRESHOLD_HIGH = 0.80
+# D057: on the Platt-calibrated scale now (RiskModel applies the calibrator
+# automatically when one is attached - see risk_model.py). Picked after
+# inspecting the held-out calibrated distribution (deciles ~0.19-0.50+), not
+# hardcoded in advance - see backend/pipeline/calibrate_risk_model.py and
+# Decision.md D057 for the full comparison against isotonic calibration.
+RISK_THRESHOLD_LOW = 0.25
+RISK_THRESHOLD_HIGH = 0.50
 
 DEFAULT_WARNING_MESSAGE = "This kiosk looks unusual - please double-check before charging here."
 

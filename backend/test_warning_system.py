@@ -50,6 +50,31 @@ class RiskModelTest(unittest.TestCase):
     def test_feature_contract_matches_declared_columns(self):
         self.assertEqual(set(self.model.feature_cols), set(ALL_FEATURE_COLS))
 
+    def test_calibrator_is_attached(self):
+        # D057 - the deployed artifact should have a Platt calibrator after
+        # calibrate_risk_model.py --save has been run.
+        self.assertTrue(self.model.is_calibrated, "expected a calibrator attached to the deployed artifact (D057)")
+        self.assertIsNotNone(self.model.calibrator)
+
+    def test_calibrated_risk_still_a_probability(self):
+        score = self.model.predict_risk(HIGH_RISK_FEATURES)
+        self.assertGreaterEqual(score, 0.0)
+        self.assertLessEqual(score, 1.0)
+
+    def test_calibration_preserves_relative_ranking(self):
+        # Platt/isotonic calibration is a MONOTONIC transform of the raw
+        # score by construction - a feature set with a higher raw score must
+        # not end up with a LOWER calibrated score than one with a lower raw
+        # score. Checked on the two fixtures directly (not assumed from
+        # calibrate_risk_model.py's own report).
+        raw_low = self.model._raw_proba([[LOW_RISK_FEATURES[c] for c in self.model.feature_cols]])[0]
+        raw_high = self.model._raw_proba([[HIGH_RISK_FEATURES[c] for c in self.model.feature_cols]])[0]
+        cal_low = self.model.predict_risk(LOW_RISK_FEATURES)
+        cal_high = self.model.predict_risk(HIGH_RISK_FEATURES)
+        if raw_high > raw_low:
+            self.assertGreaterEqual(cal_high, cal_low,
+                                     "calibration must not reverse the raw model's ranking")
+
     def test_predict_risk_returns_probability(self):
         score = self.model.predict_risk(LOW_RISK_FEATURES)
         self.assertGreaterEqual(score, 0.0)
