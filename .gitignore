@@ -29,3 +29,19 @@ __pycache__/
 
 # OS cruft
 .DS_Store
+
+# Secrets - never commit (API keys live here, e.g. GEMINI_API_KEY)
+.env
+*.env
+backend/.env
+
+# Other large/non-source blobs seen untracked - not project source
+backend/Muse/*.zip
+backend/audio/
+backend/images/
+backend/screenshots/
+backend/screenshots_analysis.csv
+backend/interaction_logs/
+backend/intake_web/
+gaze_pilot_out/
+backend/rag_contaminated_sessions.json
