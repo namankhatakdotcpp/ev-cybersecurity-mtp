@@ -2460,3 +2460,40 @@ Objective 2 (the warning-system scaffold, D055) - its thresholds are now data-dr
 
 ### Remarks
 **What this does and doesn't establish**: this makes the model's output probability-literal (as literal as a modest-AUROC RandomForest's output can be made) and sets thresholds from that calibrated scale - it does not make the model more accurate, and the ~77% would-warn rate at these thresholds is a direct, unavoidable consequence of the model's AUROC~0.6-0.7, not something a different threshold choice can fix without trading away false negatives. If a materially lower warning rate is wanted, that is an AUROC problem (needs a better model/more data, Objective 3's eventual job) or a deliberate, stated tradeoff of recall for a lower warning rate - not a calibration problem. **Also unresolved, same as every prior round**: the production model is still trained on all 140 sessions with no held-out split (D055) - this calibration task's OOF probabilities are a separate, held-out-only analysis used solely to fit and evaluate the calibrator, and do not change the fact that scoring any of those same 140 sessions' own data through the deployed model (as `score_session_offline()` does) is a demo of the pipeline, not an evaluation - any performance claim must still come from D050's held-out CIs, per the user's own explicit flag this round.
+
+---
+
+## D058
+
+### Date
+2026-10-23
+
+### Decision
+Paused the SLM-vs-ML risk-classification comparison on this Mac and moved all further SLM/compute-heavy work to the lab workstation. The comparison script (`backend/pipeline/compare_slm_classifiers.py`) was written and smoke-tested (5 rows, `mistral:7b-instruct` only - not a real evaluation, no citable numbers exist from this) but never run for real on this machine. All 5 SLMs that had been pulled for it (`mistral:7b-instruct`, `llama3.1:8b`, `phi3:3.8b`, `gemma2:9b`, `qwen2.5:7b`, ~21GB) have been removed from the Mac, along with the local Ollama server process. The real run is deferred to the lab PC.
+
+### Context / Problem
+The user stated a workflow change: going forward, Claude sessions for this project will run on the lab workstation itself, against the same git repository (`ev-cybersecurity-mtp`, now correctly attributed to the `namankhatakdotcpp` GitHub account per this session's history rewrite) and the same dataset - which, on the lab machine, includes the full video recordings (never available on this Mac) and an RTX 4090 GPU. Continuing to build out SLM/compute-heavy comparisons on the Mac would (a) duplicate ~20GB+ of model downloads across two machines for no benefit, since the models produce identical output regardless of which machine runs them, and (b) permanently restrict the comparison to the gaze+behaviour-only feature set already used by the deployed model, when the lab environment can finally attempt the video modality that this session's own architecture review (comparing the current implementation against the original mid-sem report's Figures 1-2) found was never implemented anywhere in this project - the proposed pipeline fuses video + eye + EEG; what exists today uses gaze + behaviour only.
+
+### Evidence
+Script status as committed: zero-shot classification prompt, parses a single 0/1 response, explicitly reports parse-failure rate rather than hiding it, computes AUROC for the ML baseline only (a single zero-shot LLM digit is not a calibrated probability, and no second quantity was requested from the SLMs to fake one). Smoke test (5 held-out rows, `mistral:7b-instruct`, zero-shot, temperature=0): ran correctly end-to-end, ML baseline (fresh RandomForest on the same 5 rows) scored balanced_accuracy=1.0/F1=1.0/AUROC=1.0 (a 5-row sample, not a result - too small to mean anything on its own), `mistral:7b-instruct` scored balanced_accuracy=0.5/F1=0.333 on the same 5 rows. These numbers are reported here only to document that the harness works, not as a finding - nothing from a 5-row run is citable.
+
+### Reason
+Running the comparison now, on Mac CPU, using only the features already available here, would produce a result that is methodologically narrower than what will shortly be possible on the lab machine (no video modality, slower per-call latency with no GPU), and that result would need to be redone anyway once video features exist - risking a confusing situation where an early, narrower Mac-only result sits in the record next to a later, broader lab-PC result answering the same question differently. Removing the models/server reclaims real disk space (~21GB) for no cost, since nothing on this Mac depends on them (the warning-system's local-SLM phrasing path already has a graceful fallback to `DEFAULT_WARNING_MESSAGE` if Ollama/the model isn't present - see `warning_system.py`'s `_invoke_local_slm`, unaffected by this removal).
+
+### Alternatives Considered
+(a) Finish a full gaze+behaviour-only comparison on the Mac now, since the models were already downloaded, and treat a video-inclusive comparison as a separate, later task. (b) Keep the models installed on both machines for redundancy/offline use.
+
+### Why Alternatives Were Not Chosen
+(a) would produce a numeric table that invites being cited as "the" SLM comparison when it actually excludes a modality the original pipeline was built around, shortly before an environment exists that could include it - the standing project rule against overclaiming (D045's own lesson, Decision.md generally) argues against publishing a narrower result when a better-scoped one is imminent and nearly free to wait for. (b) spends ~21GB of local disk for zero actual benefit - the models are deterministic given the same prompts/weights, so having a second local copy buys nothing a `git pull` + `ollama pull` on the lab machine doesn't already provide.
+
+### Implementation
+One commit: `backend/pipeline/compare_slm_classifiers.py` (already written, already matches D050/D057's feature set and participant-level split discipline, ready to run as-is - or to be extended with a video-feature column once that extraction exists). Local cleanup (not committed, not applicable to git): `ollama rm` for all 5 pulled models, `ollama serve` process stopped.
+
+### Status
+Not Started (no real evaluation has been run anywhere - this entry documents a deferral and a cleanup, not a result). To resume on the lab PC: `ollama pull` the same 5 tags (~21GB), `git clone` the repo, run `python3 compare_slm_classifiers.py --save`. A true video-inclusive comparison additionally needs new video feature-extraction code (Step 2 of the original pipeline, Section 10.2 of the mid-sem report) - that does not exist yet on either machine and is not automatically unlocked just because the video files are present on the lab PC.
+
+### Impact
+Objective 2 (the SLM comparison table the user requested) - deferred, not abandoned. Also touches the architecture-gap finding from this session (video/EEG modality never implemented) - the lab PC is the first point at which closing that gap is actually possible, not just theoretically available.
+
+### Remarks
+**What stays Mac-appropriate going forward**: desk-work that needs no GPU, no video data, and no new large downloads - diffing the two `main.py`/config copies, drafting the Step 13 trust-study design doc, verifying literature citations, checking the speaking script against D045, folding D052-D058 into the refreshed Research Audit (now including the architecture-mismatch finding as its most important item), and drafting the message to Ranik. **What moves to the lab PC**: this SLM comparison (with or without video), any deep-learning pipeline work (MLP/LSTM/Transformer phases, Section 10.9 of the report - never attempted on either machine), and all of Objective 3's remaining physical-hardware items (already established as lab-only in D053-D056).
