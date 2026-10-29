@@ -3503,3 +3503,36 @@ The final report and Gate 5 report now include the override results. The earlier
 
 ### Remarks
 Backup branches stay until the user confirms the pushed tree, then they are deleted, `git gc --prune=now` is run, and the local session map is deleted if not needed.
+
+
+## D084
+
+### Date
+2026-10-29
+
+### Decision
+After `main` was pushed (origin/main and local main both at `4b998d0`), deleted the local backups that held the pre-cleanup history, on the user's approval, and recorded exactly what was removed and what was kept.
+
+### Context / Problem
+The four `backup/*` branches and `refs/original/` still held the session map (`video_gaze_session_map.csv`: participant code, session folder, timestamps) in local history. The pushed tree was scanned first: the session map is in no commit reachable from `origin/main`, the lab-folder string occurs nowhere in the tree or in pushed history, and session folder names remain only in files that were already public before the cleanup (`Decision.md`, `backend/gaze/aoi_free_pilot.py`, `backend/pipeline/feature_table.csv`).
+
+### Evidence
+Before deleting, `git log origin/main..<branch>` listed 48, 49, 45 and 45 commits for `backup/pre-push-20261029`, `backup/pre-rewrite-ca6219f`, `backup/post-rewrite1` and `backup/post-rewrite2`. Every commit subject exists on `origin/main`, and every pre-rewrite hash is in `docs/audit/HASH_MAP.md`, so no content was held only by the backups. `private/` (two files) was copied outside the repository and outside any cloud-synced folder; SHA-256 hashes of both files match the originals.
+
+### Alternatives Considered
+Keep the backups until the thesis is submitted.
+
+### Why Alternatives Were Not Chosen
+The backups were the only remaining place in this clone where the session map sat in git history; the working copy is kept in `private/` and in the verified copy.
+
+### Implementation
+Deleted: branches `backup/pre-push-20261029`, `backup/pre-rewrite-ca6219f`, `backup/post-rewrite1`, `backup/post-rewrite2`; the ref under `refs/original/`; the reflog (`git reflog expire --expire=now --all`); unreachable objects (`git gc --prune=now`); 251 stray `._*` and `tmp_pack_*` files under `.git/objects` and three `._*` files under `.git/refs`. Kept: branch `backup-mac-history-963d319` (until the thesis is submitted), tag `protocol-v1`, `private/`, and the verified copy of `private/`.
+
+### Status
+Complete. `git fsck --full` passes, `git status` shows only the untracked local Word progress report, `git log origin/main..main` is empty, and the guard test `test_no_private_strings.py` passes (4 tests). The user reports the GitHub repository is now private (not checked from here).
+
+### Impact
+No analysis result, registry row or committed report changed. Copies already in forks, clones or caches are not affected.
+
+### Remarks
+Open: the participant-code and session-folder linkage in the older public files needs the supervisor's decision under the consent terms (see `docs/audit/LEGACY_EXPOSURE_PLAN.md`).
