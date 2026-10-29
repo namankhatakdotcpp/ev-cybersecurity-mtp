@@ -2950,3 +2950,38 @@ Reinforces D064-D068: no modality (behaviour, gaze, EEG) shows a detectable impr
 
 ### Remarks
 Further EEG analysis on these participants would be a data-driven fork; a clean EEG test needs a new collection with whole-session recording and trial position controlled. The limited power (differences below about 0.06 AUROC are indistinguishable from zero) is a property of the subset, not evidence that a larger effect would be absent.
+
+
+---
+
+## D070
+
+### Date
+2026-10-29
+
+### Decision
+Built the Gate 5 SLM scenario set (Protocol v1 section 9) and **stopped for your approval before any model is run**. The set has 240 stations (40 benign, 40 all-attacked, 160 mixed) and 599 available kiosks, quota-sampled from the logged station layouts of 106 sessions (at most 3 stations per session, seed 20261029). Ground truth is simulation metadata only (each kiosk's attack flag and attack mode). Every visible-cue class has at least 41 kiosks and each hidden attack mode at least 65 (requirement 30). Evidence is given in two variants: V1 cue-free, V2 with the game's own automated screenshot descriptions of the coupon images. Approval document: `docs/protocol/GATE5_scenario_set.md`.
+
+### Context / Problem
+You approved Gate 5 with the instruction to build the labelled scenario set first and show it before any model run. The brief's class "overcharging" does not exist in the game metadata (attacks reduce or block the delivered charge), and the SLMs are text-only.
+
+### Evidence
+Build is deterministic from `configs/gate5_slm.yaml`; four tests pass (inputs and truth aligned, quotas met, model inputs contain no attack/safe/image-type words or identifiers, every shown image has a description). Non-model reference rules on the set: always SAFE 51.4% accuracy, discount-badge rule 51.9%, deepfake-image-type rule 73.3% (79% across all logged kiosks; lower here because ambiguous classes are over-sampled), recommendation by chance avoids an attacked kiosk 51.5% of the time at mixed stations. One image description (deepfake1) contains an explicit "DEEPFAKE" label, a giveaway in V2. 60 of the 240 stations show no coupon image, so V1 and V2 coincide there.
+
+### Alternatives Considered
+(a) Add synthetic overcharging scenarios; (b) include a history variant (earlier-station outcomes as the deployed assistant sees them); (c) sample stations at random without quotas; (d) use the stronger override wording for the malicious condition.
+
+### Why Alternatives Were Not Chosen
+(a) The protocol requires ground truth from simulation metadata, and overcharging is not in it; offered as an option, not done. (b) Outside the protocol's V1/V2 design; offered as an option. (c) Random sampling would leave rare classes (ambiguous safe deepfake kiosks are about 8% of kiosks) with too few cases. (d) The original (D024) wording is the baseline; the stronger wording is offered as a separately reported second condition.
+
+### Implementation
+`configs/gate5_slm.yaml` and `configs/gate5_prompts.yaml`; `backend/pipeline/gate5/{build_scenarios,scenario_report}.py` with tests; `scenarios/slm_v1/` (inputs, truth, image descriptions, manifest, 20 synthetic format-pilot prompts); the private session map is under the gitignored results folder. No Ollama call was made.
+
+### Status
+Awaiting approval. Decisions needed from you: approve or change the composition; overcharging (recommend drop); malicious wording (recommend original); evidence variants (recommend V1 and V2 only); decoding design; approval of the 20-prompt format pilot, which is the first step that would call a model.
+
+### Impact
+None yet on results. Defines the only data the SLM track will use; the D063 comparison (which gave models post-hoc behaviour/gaze numbers, no kiosk information) is not reused.
+
+### Remarks
+Per-class results are the unit of interpretation; overall accuracy on this quota-sampled set is not a population estimate. The hidden attack modes (reduced, blocked) are consequences after charging, so recall by hidden mode measures recall on attacked kiosks with the visible cues they happen to have, not recognition of the mode itself.
