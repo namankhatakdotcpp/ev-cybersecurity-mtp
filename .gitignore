@@ -45,3 +45,7 @@ backend/interaction_logs/
 backend/intake_web/
 gaze_pilot_out/
 backend/rag_contaminated_sessions.json
+
+# Raw Varjo gaze CSVs + screen-capture mp4s (participant data / 1.5TB) and macOS AppleDouble files
+Varjo/
+._*
