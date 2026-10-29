@@ -3638,3 +3638,36 @@ None on any result. No FPS claim may be made until the template is filled from r
 
 ### Remarks
 Commits are local only.
+
+
+## D088
+
+### Date
+2026-10-29
+
+### Decision
+Step 5 (path refactor) was started and **stopped at its acceptance test**: the rebuilt feature table does not match the committed one. The committed `feature_table.csv` was not overwritten and nothing else was changed in the repository except this entry and `docs/audit/FEATURE_TABLE_REBUILD_CHECK.md`. The path-only edits to `paths.py` and `build_feature_table.py` are left uncommitted in the working tree.
+
+### Context / Problem
+Approved plan: move the remaining hardcoded machine paths behind `backend/pipeline/paths.py`, starting with `build_feature_table.py`, and accept the change only if a rebuild on this machine reproduces the committed table's checksum.
+
+### Evidence
+Committed SHA-256 `161577ae...`. Rebuild with the refactored script: `eeg_missing` true in all 1,123 rows (committed 799), because `load_eeg_pair` divides a pandas integer timestamp by 1e3 on the assumption of microsecond precision, whereas pandas 2.3.3 here parses nanoseconds. A diagnostic copy with a unit-independent conversion reproduces `eeg_missing` and every cell except line endings (committed LF, rebuilt CRLF) and one signed zero in `gaze_dispersion` (`-0.0` against `0.0`). Details: `docs/audit/FEATURE_TABLE_REBUILD_CHECK.md`.
+
+### Alternatives Considered
+Fix the timestamp conversion and line endings and overwrite the committed table; commit the path edits anyway.
+
+### Why Alternatives Were Not Chosen
+The agreed rule was to stop and report on a mismatch, and the fix changes script behaviour, so it needs approval as a documented deviation. Overwriting the table would change the checksum that the registered runs used.
+
+### Implementation
+None committed. Proposed fix (unit-independent timestamp conversion, `lineterminator="\n"`, signed-zero handling, then re-compare) is in the check document.
+
+### Status
+Stopped; awaiting the user's decision. 65 tests pass with the uncommitted path edits present. The other twelve files in `docs/audit/HARDCODED_PATHS.md` are untouched.
+
+### Impact
+No registered result, table or report changed. The results do not depend on this: the registered analyses used the committed table.
+
+### Remarks
+The finding means `build_feature_table.py` is not reproducible across pandas versions even with correct paths; `docs/REPRODUCE.md` should say so until it is fixed.
