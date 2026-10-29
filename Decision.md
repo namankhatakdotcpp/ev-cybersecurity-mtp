@@ -2546,3 +2546,47 @@ Objective 3 and the gaze-capture blocker: the long-standing question of what pro
 
 
 **Addendum (2026-10-29, ffprobe 9.0.2, read-only)**: the two mp4s with no readable duration (`varjo_capture_<timestamp>.mp4`, 2.8 GB; `varjo_capture_<timestamp>.mp4`, 3.9 GB) are truncated - ffprobe reports "moov atom not found", i.e. the recording was never finalized (cause not established; a Varjo Base crash or cut-off capture is a guess). Their gaze CSVs are intact (503.6 s and 665.1 s), so those two sessions have gaze but no usable video unless the files are repaired (not attempted; would need a tool such as `untrunc` and a healthy reference clip). `130.csv`'s video (`varjo_capture_<timestamp>.mp4`) is intact and genuinely 66,862.5 s (18.6 h; h264, 2048x1536, 2,005,878 frames, 47.6 GB) against a 3,083 s gaze span, so the session is a small part of that file and any frame extraction must be limited to the gaze time window. Its average frame rate is reported as 2026887196/67562839, about 30.0 fps but not exactly 30, which should be checked before relying on frame-exact gaze alignment. This replaces the "not investigated" note above for these two files; the Status line's list of unverified items is otherwise unchanged.
+
+
+---
+
+## D060
+
+### Date
+2026-10-29
+
+### Decision
+Ran a bounded pilot (participants 021, 041, 100; 180 frames extracted in total, scratch only, nothing under `Varjo/` or `raw_data/` modified) to test whether the Varjo mp4s can ground-truth gaze-to-screen AOIs. **Verdict: PARTIALLY.** The video shows the kiosk UI clearly, so AOI labels are recoverable from video in principle. But a fixed 2D affine map from `gaze_projected_*` to video pixels was NOT validated: it does not track the on-screen pointer reliably on held-out participants. No AOI hit rate against true kiosk choice was measured (see Not done).
+
+### Context / Problem
+D021/D026/D030 left AOI mapping closed: `aoi_mapper.py` pinned 021's gaze to Kiosk 3 although Kiosk 1 was chosen, and D030 attributed this to depth/vergence. D059 found the videos. This pilot asks what the video itself can answer.
+
+### Evidence
+**Timestamps (measured).** All three mp4s are constant frame rate: per-frame pts spacing is 33.30/33.33 ms (time base 1/30000) on 60 s slices of 021 and 041. The odd `avg_frame_rate` (e.g. 12580000/419333) is an averaging artifact of frame count over duration, not a variable clock. Gaze `relative_to_video_first_frame_timestamp` is video time in nanoseconds (first row about -10 ms), and (epoch - relative) is constant to 0.000 ms across each whole file for 021/041/100, so there is zero measured drift between gaze and video clocks. The gaze `frame_number` column is a gaze-sample counter (about 199.5 per second), NOT a video frame index, and must not be used for video alignment. Gaze runs at about 199.5 Hz. The video starts 132-445 s after the interaction log's `Started` event (021: 445 s, 041: 149 s, 100: 132 s), so the video covers only part of each logged session; 021's 125.8 s video contains only its single station.
+
+**What the video shows (viewed, 6 frames per session).** A single mono render of the headset view, 2048x1536, h264, with a Varjo XR-4 watermark. The station UI (three kiosk cards, Set Amount, Start Charging, Skip, AI Assistant, the keypad dialog) is fully visible and legible at roughly 380 px per kiosk card. The UI is a world-anchored curved panel, NOT head-locked: its pixel position and perspective shift as the head moves (clearly different between 30 s and 60 s in 021), so fixed AOI rectangles in screen space cannot be right for this data. The mouse pointer is visible as an orange arrow, giving a measurable pointer position. Interaction-log events line up with what the frames show (021: Kiosk 1 selected with 25 points at 60 s, `charging` page event at 62.06 s).
+
+**Gaze-to-pixel test (pointer as calibration source, 135 frames: 021 n=54, 041 n=48, 100 n=33; pointer detected by colour).** Literal conventions (signed-normalized, any flips, left or right eye) give 262-492 px median error against the pointer, no better than a constant guess at the median pointer position (183 px). An affine map fitted on 021 only and applied to 041 and 100 without refitting: held-out median error 199 px and 214 px against constant-guess baselines of 322 px and 282 px; but the within-session correlation of gaze x with pointer x is +0.41 (021), +0.56 (041), -0.29 (100), and gaze y with pointer y is -0.52, 0.00, -0.17. At the click moment itself only 3-4 frames per session exist, too few to conclude anything (held-out errors 287 px and 149 px). The pointer is not the gaze point, so this is a weak calibration source, and the fit mostly re-centres an offset rather than demonstrating tracking.
+
+**Left/right disagreement (D030's vergence finding, re-examined).** Across all valid samples, left minus right projected x is a near-constant 0.475 (p5-p95 0.474-0.477 for 021; 0.475-0.481 for 041), and left/right y are identical. It does not vary with depth. Correlation with `focus_distance` is -0.27 (021) and 0.01 (041). `focus_distance` itself is saturated: 97.7% (021) and 77.2% (041) of valid samples equal 2.0, so it carries little depth information.
+
+### Reason
+A bounded, 180-frame pilot was the cheapest way to learn whether video can ground-truth AOIs before any bulk extraction; the pointer was used because it is the only on-screen position signal available in every frame, not because it equals gaze.
+
+### Alternatives Considered
+(a) Start bulk frame extraction across all 158 videos. (b) Declare the affine fit a success because held-out error beat the constant baseline on 041/100. (c) Locate kiosk panels per frame and report an AOI hit rate in this pilot.
+
+### Why Alternatives Were Not Chosen
+(a) 1.47 TB before knowing the mapping works is wasted effort. (b) The error improvement is mostly re-centring (correlations are weak and inconsistent in sign) and the pointer is not gaze; calling it validation would be the overclaim this log's standing rule prohibits. (c) Needs per-frame panel localisation (the panel moves), which was not built in this pilot.
+
+### Implementation
+Scripts in `backend/pipeline/video_pilot/` (alignment check, pointer-vs-gaze fit and held-out test, click-window and left/right-offset analysis). Frames and the pointer/gaze pair table stayed in `D:\MTP_scratch\video_pilot` and are not committed.
+
+### Status
+Verified (frame timing, gaze-video clock agreement, what the video shows, the constant left/right offset and `focus_distance` saturation). Not validated: any gaze-to-pixel mapping. **Not done**: per-frame localisation of the three kiosk panels and the charge button as pixel rectangles; an AOI hit rate against each participant's true kiosk choice (021 is Kiosk 1, per D026); a fit on actual click events beyond 3-4 frames per session; only 3 participants tested.
+
+### Impact
+Weakens D030's diagnosis: the left/right disagreement is a constant per-eye offset, not a depth-dependent one, and `focus_distance` is mostly saturated, so the depth-aware mapping D030 pointed toward is not supported by this column. D021's finding (world-anchored UI needs head pose) is supported: the UI is visibly world-anchored in the video. D026's statement that a 2D calibration might suffice is not supported by this pilot's fit. D030's "NOT SIMPLY FIXABLE" and D025's RQ1 rescoping stand. D031's head-pose logging remains the principled route; this pilot adds that the video itself can supply per-frame panel positions without new data, which is the open option.
+
+### Remarks
+Next step if AOI recovery is pursued: locate the panel per frame (template or corner detection on the video) so each gaze sample can be expressed in panel coordinates, and test the gaze-to-pixel map on click events using the interaction log's selection pages. Frame-index alignment must use pts, and the constant 0.475 left/right offset should be understood (likely a per-eye viewport convention) before any mapping is trusted. Open question for the mentor: whether Varjo Base recordings were run with a fixed calibration step.
