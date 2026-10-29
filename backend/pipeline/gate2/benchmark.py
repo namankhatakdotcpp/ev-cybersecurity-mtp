@@ -43,7 +43,20 @@ def hp_grid(learner, g3):
     raise ValueError(learner)
 
 
+def detrend_within_fold(train, test, cols, spec):
+    """Gate 6 deviation (D075): remove a linear trend on `spec["by"]` from each listed column present in `cols`, fitted on the training rows only.
+    Default off: only active when g3 carries a `detrend_on` entry."""
+    train, test = train.copy(), test.copy()
+    for c in [c for c in spec["cols"] if c in cols]:
+        slope, icpt = np.polyfit(train[spec["by"]].to_numpy(float), train[c].to_numpy(float), 1)
+        for d in (train, test):
+            d[c] = d[c].to_numpy(float) - (icpt + slope * d[spec["by"]].to_numpy(float))
+    return train, test
+
+
 def fit_predict(learner, hp, train, test, cols, log1p, g3, seed):
+    if g3.get("detrend_on"):
+        train, test = detrend_within_fold(train, test, cols, g3["detrend_on"])
     ytr = train["y"].to_numpy(float)
     if learner == "ridge":
         tr = Transformer(cols, log1p).fit(train)

@@ -1,0 +1,36 @@
+# Gate 6 extra analyses (Step 3 of the close-out brief). Written and committed BEFORE the first run.
+# Each is exploratory; (b) and (c) are labelled deviations from protocol v1. Nothing is chosen after seeing a result.
+inherits: [configs/gate2_h1.yaml, configs/gate3_grid.yaml, configs/gate4_eeg.yaml]
+
+s5:                                   # (a) skip vs charge, framed relative to exposure (D073)
+  outcome: "skip = 1, charge = 0; station visits with a charge or skip decision and computable gaze features"
+  main_set: informative_stations      # protocol v1 T2: mixed stations only
+  extension_set: all_stations         # exploratory extension: benign and all-attacked stations added; exposure block gains benign and all_attacked indicators
+  exposure_block: [p_exp, n_available]               # linear covariates (logit(p_exp) is undefined at 0 and 1, so no offset)
+  extension_exposure_block: [p_exp, n_available, benign, all_attacked]
+  sets: {B0: [], B: [log_window_duration_s, ai_help_used, trial_index], BG: [log_window_duration_s, ai_help_used, trial_index, gaze_n_fixations, gaze_n_clusters, gaze_n_transitions, gaze_transitions_per_fixation, gaze_dispersion, gaze_entropy_bits]}
+  contrast: [BG, B]                   # protocol S5: B vs B+G
+  learner: ridge                      # same grid, same 5 x 20 nested participant-grouped CV, same bootstrap
+  lrt: {df: 6, test: "mixed logit with participant random intercept, no offset"}
+  permutation: {B: 200, seed: 7273}
+  holm: {family: [S1, S2, S5, S6], p_source: {S1: g3_secondary_S1, S2: g3_secondary_S2, S6: g4_s6_ridge (descriptive LRT, 17 df), S5: this run (main set)}, note: "the extension is exploratory and outside the family"}
+  descriptive: skip_rate_by_exposure_cell_with_wilson_ci
+
+ridge_grid_sensitivity:               # (b) post-hoc sensitivity, deviation from protocol v1 (D074)
+  label: "post-hoc sensitivity, deviation from protocol v1"
+  C_grid: [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0]   # original grid [0.01, 0.1, 1, 10]; extended at both ends
+  sets: [B0, B, BG]
+  set_: T1 primary (492 rows)
+  report: [chosen_C_distribution, auroc_by_set, delta_BG_minus_B, delta_BG_minus_B0, comparison_with_original_grid]
+  original_grid_is_kept: true
+
+eeg_detrend:                          # (c) trial-position adjustment of the EEG block, deviation (D075)
+  label: "post-hoc, deviation from protocol v1"
+  note: "trial_index is already a linear covariate in sets B, BG and BGE; this adds a training-fold detrending of each EEG feature on trial_index"
+  detrend_on: {by: trial_index, form: linear, fitted_on: training_rows_of_each_fold, cols: eeg_features_of_gate4}
+  models: [B, BG, BGE, BGE_detrended]
+  primary_contrast: [BGE_detrended, BG]
+  descriptive_only: [BGE_detrended_minus_BGE, trial_index_drift_of_each_eeg_feature_spearman]
+  permutation: {B: 200, seed: 7374}
+  not_run: [other EEG variants, LRT (17 df on 70 events)]
+  no_headline: "BGE minus B is not cited as a result"
