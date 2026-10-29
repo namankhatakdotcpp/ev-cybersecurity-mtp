@@ -1,0 +1,53 @@
+# Gate 3 configuration (Protocol v1 sections 4-7). Written and committed BEFORE the first Gate 3 run.
+# Anything the frozen protocol left open is filled in here and logged in Decision.md (D068); nothing below was
+# chosen after seeing a Gate 3 result.
+inherits: configs/gate2_h1.yaml          # paths, seeds, features, folds (5 x 20), bootstrap seed and size
+
+learners:
+  ridge:
+    C_grid: [0.01, 0.1, 1.0, 10.0]
+  rf:                                    # protocol: grid over max_depth, min_samples_leaf; 300 trees
+    n_estimators: 300
+    max_depth: [3, 6, 10]
+    min_samples_leaf: [5, 20]
+    class_weight: null                   # target is not rebalanced (protocol section 5)
+    seed_offset: 20000
+  hgb:                                   # protocol: HistGradientBoostingClassifier; grid fixed here
+    learning_rate: [0.03, 0.1]
+    max_leaf_nodes: [4, 8]
+    max_iter: 150
+    min_samples_leaf: 20
+    l2_regularization: 1.0
+    early_stopping: false
+    seed_offset: 30000
+
+inner_selection: pooled_inner_oof_log_loss   # pooled over the inner folds; ties -> first grid entry
+
+# modality sets (exposure + design always present; protocol section 6)
+sets:
+  B0: {extra: []}
+  B:  {extra: [log_window_duration_s, ai_help_used, trial_index]}
+  G:  {extra: [gaze_n_fixations, gaze_n_clusters, gaze_n_transitions, gaze_transitions_per_fixation, gaze_dispersion, gaze_entropy_bits]}
+  BG: {extra: [log_window_duration_s, ai_help_used, trial_index, gaze_n_fixations, gaze_n_clusters, gaze_n_transitions, gaze_transitions_per_fixation, gaze_dispersion, gaze_entropy_bits]}
+
+operating_points:
+  A: maximise_balanced_accuracy          # chosen on the inner validation predictions of each training fold
+  B: largest_threshold_with_recall_at_least_0.80   # interpretation of "smallest threshold reaching recall 0.80":
+                                                    # the threshold that keeps recall >= 0.80 while predicting as few
+                                                    # positives as possible (highest specificity at that recall)
+  recall_target: 0.80
+  rule: predict positive when probability >= threshold
+
+calibration:
+  n_bins: 8
+  slope_intercept: logistic_regression_of_outcome_on_logit_of_prediction
+
+secondary:
+  S1: {description: "G alone vs exposure baseline", compare: [G, B0], learner: ridge}
+  S2: {description: "H1 with early-window features: first 5 s after Reached, window duration dropped",
+       window_seconds: 5, behaviour: [ai_help_early, trial_index], learner: ridge, min_window_s: 5.0}
+  holm_family: [S1, S2, S5, S6]          # S5 and S6 run in later gates; provisional adjustment at family size 4
+  exploratory_S8: {pairs: [[rf, ridge], [hgb, ridge]], fdr: benjamini_hochberg}
+  challenger_boosting: not_run_unless_a_pre_specified_model_beats_B0   # protocol section 5, item 5
+
+permutations: {cv: 200, seed: 7070}
