@@ -229,11 +229,25 @@ The override condition was rerun under a scoring rule written before scoring (Am
 - **Language-model scenario set.** Quota-sampled, text-only, one main decoding setting, image descriptions written by another model; the investigators were not blind to the labels. The results do not transfer to a deployed assistant or to human behaviour.
 - **Multiplicity.** Many strata and sensitivity runs were made; unadjusted p-values are descriptive. Where a Holm bound or an FDR value is given, it covers only the family named.
 
+## 7. Recommended design for new data collection
+
+The existing data cannot answer whether gaze, EEG or an assistant changes risky decisions. A new study could:
+
+1. Pre-register the scenario set, the primary outcome, the exclusion rules and the analysis, and keep a held-out set of participants untouched until the analysis is fixed.
+2. Randomise three assistant conditions (no assistant, correct recommendation, malicious recommendation) and **log the assistant replies and the condition for every decision**.
+3. Log head pose and the world positions of the kiosks, so gaze can be mapped to areas of interest without video.
+4. Record decision latency and pre-decision gaze as defined measures with the decision window fixed before the outcome is known.
+5. Record EEG for the whole session with start and end markers, check signal quality online, and report the usable sample before analysis.
+6. Counterbalance trial order and kiosk layout so exposure is not confounded with position, time or collection period.
+7. Use a sample size justified by the smallest difference of interest rather than by availability.
+8. Evaluate any language-model assistant with people, not only with scripted prompts [CITE: automation bias in decision support].
+
 
 ## Citation placeholders
 
 - [CITE: Benjamini-Hochberg false discovery rate]
 - [CITE: Wilson score interval]
+- [CITE: automation bias in decision support]
 - [CITE: cluster bootstrap]
 - [CITE: consumer EEG artefacts in mobile settings]
 - [CITE: mixed-effects logistic regression]

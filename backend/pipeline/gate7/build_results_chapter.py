@@ -285,7 +285,22 @@ def s6_limits(c):
             ""]
 
 
-SECTIONS = [s1_audit, s2_h1, s3_ml, s4_eeg, s5_slm, s6_limits]
+def s7_design(c):
+    """Recommended design for the next data collection."""
+    return ["## 7. Recommended design for new data collection", "",
+            "The existing data cannot answer whether gaze, EEG or an assistant changes risky decisions. A new study could:", "",
+            "1. Pre-register the scenario set, the primary outcome, the exclusion rules and the analysis, and keep a held-out set of participants untouched until the analysis is fixed.",
+            "2. Randomise three assistant conditions (no assistant, correct recommendation, malicious recommendation) and **log the assistant replies and the condition for every decision**.",
+            "3. Log head pose and the world positions of the kiosks, so gaze can be mapped to areas of interest without video.",
+            "4. Record decision latency and pre-decision gaze as defined measures with the decision window fixed before the outcome is known.",
+            "5. Record EEG for the whole session with start and end markers, check signal quality online, and report the usable sample before analysis.",
+            "6. Counterbalance trial order and kiosk layout so exposure is not confounded with position, time or collection period.",
+            "7. Use a sample size justified by the smallest difference of interest rather than by availability.",
+            "8. Evaluate any language-model assistant with people, not only with scripted prompts [CITE: automation bias in decision support].",
+            ""]
+
+
+SECTIONS = [s1_audit, s2_h1, s3_ml, s4_eeg, s5_slm, s6_limits, s7_design]
 
 
 def build(results_dir=None, out=None, audit=None):
