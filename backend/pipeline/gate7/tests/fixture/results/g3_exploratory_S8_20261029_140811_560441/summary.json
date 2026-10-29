@@ -1,0 +1,114 @@
+{
+ "experiment_id": "g3_exploratory_S8_20261029_140811_560441",
+ "timestamp": "2026-10-29T14:08:11",
+ "protocol_version": "v1",
+ "protocol_commit": "58e59c0e5fd2dc1cdd647336363984f349457ec7",
+ "dataset_version": "4788b35f9785821f27723aee2cb6103bfb096c7a03c64b02102fafa12a3e4d25",
+ "feature_version": "161577aecc0b96dcfa593733008865a85dc9ea5a79aa5a7de0bf6ab056867654",
+ "label_version": "T1-v1",
+ "split_scheme": "paired bootstrap of the grid runs (same participant resamples)",
+ "seed": "4242",
+ "model": "rf and hgb vs ridge",
+ "hyperparameters": {
+  "family": "Benjamini-Hochberg over 8 comparisons"
+ },
+ "environment": "python 3.10.0rc2; Windows 10; numpy 2.2.6; scipy 1.15.3; pandas 2.3.3; scikit-learn 1.7.2; statsmodels 0.15.0",
+ "git_commit": "dca9470c670b285e1bddce18ae0b41b6ea1693ef+dirty",
+ "metrics": {
+  "comparisons": [
+   {
+    "comparison": "rf_minus_ridge",
+    "set": "B0",
+    "delta_auroc": -0.0007589887349526511,
+    "ci": [
+     -0.013070193689022134,
+     0.011643378602370448
+    ],
+    "p_boot": 0.911,
+    "fdr_bh": 0.911
+   },
+   {
+    "comparison": "rf_minus_ridge",
+    "set": "B",
+    "delta_auroc": -0.02156440809536952,
+    "ci": [
+     -0.03720298854170435,
+     -0.005235082348227244
+    ],
+    "p_boot": 0.01,
+    "fdr_bh": 0.037333333333333336
+   },
+   {
+    "comparison": "rf_minus_ridge",
+    "set": "G",
+    "delta_auroc": -0.02777882455391674,
+    "ci": [
+     -0.04991707512620059,
+     -0.0058485673434565105
+    ],
+    "p_boot": 0.014,
+    "fdr_bh": 0.037333333333333336
+   },
+   {
+    "comparison": "rf_minus_ridge",
+    "set": "BG",
+    "delta_auroc": -0.03931220893364798,
+    "ci": [
+     -0.0633436492362809,
+     -0.01513442656867902
+    ],
+    "p_boot": 0.004,
+    "fdr_bh": 0.032
+   },
+   {
+    "comparison": "hgb_minus_ridge",
+    "set": "B0",
+    "delta_auroc": -0.006641267149554238,
+    "ci": [
+     -0.017749588191493124,
+     0.0043305597948423945
+    ],
+    "p_boot": 0.221,
+    "fdr_bh": 0.26742857142857146
+   },
+   {
+    "comparison": "hgb_minus_ridge",
+    "set": "B",
+    "delta_auroc": -0.01661761057684971,
+    "ci": [
+     -0.03445317846178871,
+     0.0024152889184141544
+    ],
+    "p_boot": 0.093,
+    "fdr_bh": 0.1488
+   },
+   {
+    "comparison": "hgb_minus_ridge",
+    "set": "G",
+    "delta_auroc": -0.013952901674830777,
+    "ci": [
+     -0.03727569766693534,
+     0.009573493020836463
+    ],
+    "p_boot": 0.234,
+    "fdr_bh": 0.26742857142857146
+   },
+   {
+    "comparison": "hgb_minus_ridge",
+    "set": "BG",
+    "delta_auroc": -0.021251935468832434,
+    "ci": [
+     -0.043404377498616725,
+     0.0016187564242147805
+    ],
+    "p_boot": 0.07,
+    "fdr_bh": 0.14
+   }
+  ],
+  "any_prespecified_model_beats_B0_with_ci_above_zero": false,
+  "challenger_boosting": "not run: no pre-specified model beat B0"
+ },
+ "artifact_paths": "[]",
+ "status": "completed",
+ "notes": "Exploratory S8"
+}

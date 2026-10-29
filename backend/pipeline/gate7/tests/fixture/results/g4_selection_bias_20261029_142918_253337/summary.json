@@ -1,0 +1,460 @@
+{
+ "experiment_id": "g4_selection_bias_20261029_142918_253337",
+ "timestamp": "2026-10-29T14:29:18",
+ "protocol_version": "v1",
+ "protocol_commit": "58e59c0e5fd2dc1cdd647336363984f349457ec7",
+ "dataset_version": "33255db289f5beff0cceb9e6c5a8c320dd02905ae3d5a660ccadb6a53ac11fdd",
+ "feature_version": "161577aecc0b96dcfa593733008865a85dc9ea5a79aa5a7de0bf6ab056867654",
+ "label_version": "T1-v1",
+ "split_scheme": "descriptive comparison (no model)",
+ "seed": "{\"rows\": 150, \"participants\": 49, \"events\": 70}",
+ "model": "none",
+ "hyperparameters": {
+  "config": "configs/gate4_eeg.yaml"
+ },
+ "environment": "python 3.10.0rc2; Windows 10; numpy 2.2.6; scipy 1.15.3; pandas 2.3.3; scikit-learn 1.7.2; statsmodels 0.15.0",
+ "git_commit": "13b06c761264de957792ec6f89f597f5248ef9e2",
+ "metrics": {
+  "counts": {
+   "primary_rows": 492,
+   "primary_participants": 112,
+   "matched_rows": 150,
+   "matched_participants": 49,
+   "other_rows": 342,
+   "other_participants": 84,
+   "participants_in_both": 21
+  },
+  "row_level": [
+   {
+    "variable": "trial_index",
+    "matched_mean": 5.426666666666667,
+    "other_mean": 7.599415204678363,
+    "smd": -0.528261218249451,
+    "smd_ci": [
+     -0.8311656203325049,
+     -0.28564183808205657
+    ]
+   },
+   {
+    "variable": "window_duration_s",
+    "matched_mean": 24.23972666666667,
+    "other_mean": 21.833619883040935,
+    "smd": 0.12590751571066774,
+    "smd_ci": [
+     -0.10195624048773276,
+     0.38030070073600536
+    ]
+   },
+   {
+    "variable": "n_attacked",
+    "matched_mean": 1.3066666666666666,
+    "other_mean": 1.260233918128655,
+    "smd": 0.10291412203145076,
+    "smd_ci": [
+     -0.09780995754662916,
+     0.2946629015340026
+    ]
+   },
+   {
+    "variable": "p_exp",
+    "matched_mean": 0.5,
+    "other_mean": 0.49025341130604283,
+    "smd": 0.07566513790517013,
+    "smd_ci": [
+     -0.11834691165700448,
+     0.2804831691348055
+    ]
+   },
+   {
+    "variable": "n_available",
+    "matched_mean": 2.6133333333333333,
+    "other_mean": 2.5789473684210527,
+    "smd": 0.06995512700047962,
+    "smd_ci": [
+     -0.11387758406409265,
+     0.25670377157496826
+    ]
+   },
+   {
+    "variable": "ai_help_used",
+    "matched_mean": 0.11333333333333333,
+    "other_mean": 0.09941520467836257,
+    "smd": 0.04504299594114965,
+    "smd_ci": [
+     -0.22564371954489432,
+     0.30756357074546464
+    ]
+   },
+   {
+    "variable": "y",
+    "matched_mean": 0.4666666666666667,
+    "other_mean": 0.43859649122807015,
+    "smd": 0.056280609538316546,
+    "smd_ci": [
+     -0.16147912840165402,
+     0.2799879177727453
+    ]
+   },
+   {
+    "variable": "gaze_valid_rate (valid samples per second in the window)",
+    "matched_mean": 133.94562215424702,
+    "other_mean": 132.35631065737138,
+    "smd": 0.05525818052334358,
+    "smd_ci": [
+     -0.3180868049570407,
+     0.5043507844523217
+    ]
+   }
+  ],
+  "participant_level": [
+   {
+    "variable": "n_rows",
+    "kind": "numeric",
+    "matched": 4.448979591836735,
+    "other": 4.349206349206349,
+    "smd": 0.037749344650175334,
+    "p": 0.5980660720164281,
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.8308491267247875
+   },
+   {
+    "variable": "event_rate",
+    "kind": "numeric",
+    "matched": 0.44662072621256294,
+    "other": 0.428687670354337,
+    "smd": 0.06075352114517603,
+    "p": 0.6391147128652211,
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.8308491267247875
+   },
+   {
+    "variable": "incident_mode",
+    "kind": "numeric",
+    "matched": 0.3673469387755102,
+    "other": 0.5396825396825397,
+    "smd": -0.34828528339464104,
+    "p": 0.07144386079120237,
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.4643850951428154
+   },
+   {
+    "variable": "gaze_valid_rate",
+    "kind": "numeric",
+    "matched": 133.84572621107668,
+    "other": 131.5778626356275,
+    "smd": 0.08717835441334566,
+    "p": 0.2857609892624484,
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.6191488100686383
+   },
+   {
+    "variable": "age",
+    "kind": "numeric",
+    "matched": 21.625,
+    "other": 21.825396825396826,
+    "smd": -0.09672520902729088,
+    "p": 0.8414913663105139,
+    "n": [
+     48,
+     63
+    ],
+    "fdr_bh": 0.8414913663105139
+   },
+   {
+    "variable": "period",
+    "kind": "categorical",
+    "cramers_v": 0.35427433610451814,
+    "p": 0.0008861918529795185,
+    "shares_matched": {
+     "apr": 0.49,
+     "jul_aug": 0.327,
+     "jun": 0.184
+    },
+    "shares_other": {
+     "apr": 0.222,
+     "jul_aug": 0.683,
+     "jun": 0.095
+    },
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.011520494088733742
+   },
+   {
+    "variable": "gender",
+    "kind": "categorical",
+    "cramers_v": 0.1101153091389282,
+    "p": 0.5071130341600792,
+    "shares_matched": {
+     "female": 0.184,
+     "male": 0.796,
+     "missing": 0.02
+    },
+    "shares_other": {
+     "female": 0.206,
+     "male": 0.794,
+     "missing": 0.0
+    },
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.8240586805101288
+   },
+   {
+    "variable": "education",
+    "kind": "categorical",
+    "cramers_v": 0.1942105845932285,
+    "p": 0.37648913099870734,
+    "shares_matched": {
+     "Bachelor's": 0.673,
+     "Doctor of Philosophy": 0.082,
+     "Master's": 0.224,
+     "Senior Secondary": 0.0,
+     "missing": 0.02
+    },
+    "shares_other": {
+     "Bachelor's": 0.683,
+     "Doctor of Philosophy": 0.032,
+     "Master's": 0.254,
+     "Senior Secondary": 0.032,
+     "missing": 0.0
+    },
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.6991941004261708
+   },
+   {
+    "variable": "specialization",
+    "kind": "categorical",
+    "cramers_v": 0.585202978577515,
+    "p": 0.20343883017693154,
+    "shares_matched": {
+     "Bioengineering": 0.041,
+     "CSE": 0.49,
+     "CSE(AI and DS)": 0.0,
+     "CSE(AI and ML)": 0.0,
+     "Civil": 0.02,
+     "Civil Engineering": 0.02,
+     "Cognitie Psycholgy": 0.02,
+     "Control and automation": 0.02,
+     "DSE": 0.02,
+     "Data Science & Engineering": 0.02,
+     "ECE": 0.0,
+     "Electrical": 0.163,
+     "Electronics": 0.02,
+     "Engineering": 0.0,
+     "Human computer interaction": 0.0,
+     "Intelligence system": 0.0,
+     "MCA": 0.0,
+     "Mechanical": 0.0,
+     "PowerElectronics": 0.082,
+     "Psychology": 0.02,
+     "SCEE": 0.02,
+     "Vlsi": 0.0,
+     "ai /ml": 0.0,
+     "biology": 0.0,
+     "business": 0.0,
+     "computer science and engineering": 0.02,
+     "control systems": 0.0,
+     "ee": 0.0,
+     "maths": 0.0,
+     "missing": 0.02,
+     "physics": 0.0,
+     "robotics and ai": 0.0,
+     "zoology": 0.0
+    },
+    "shares_other": {
+     "Bioengineering": 0.032,
+     "CSE": 0.317,
+     "CSE(AI and DS)": 0.032,
+     "CSE(AI and ML)": 0.048,
+     "Civil": 0.0,
+     "Civil Engineering": 0.032,
+     "Cognitie Psycholgy": 0.0,
+     "Control and automation": 0.032,
+     "DSE": 0.0,
+     "Data Science & Engineering": 0.0,
+     "ECE": 0.032,
+     "Electrical": 0.063,
+     "Electronics": 0.016,
+     "Engineering": 0.016,
+     "Human computer interaction": 0.016,
+     "Intelligence system": 0.016,
+     "MCA": 0.063,
+     "Mechanical": 0.048,
+     "PowerElectronics": 0.048,
+     "Psychology": 0.0,
+     "SCEE": 0.0,
+     "Vlsi": 0.016,
+     "ai /ml": 0.032,
+     "biology": 0.016,
+     "business": 0.016,
+     "computer science and engineering": 0.0,
+     "control systems": 0.016,
+     "ee": 0.016,
+     "maths": 0.016,
+     "missing": 0.0,
+     "physics": 0.016,
+     "robotics and ai": 0.032,
+     "zoology": 0.016
+    },
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.6191488100686383
+   },
+   {
+    "variable": "ev_experience",
+    "kind": "categorical",
+    "cramers_v": 0.21482573169436958,
+    "p": 0.15984519921670343,
+    "shares_matched": {
+     "Never": 0.898,
+     "Rarely": 0.061,
+     "Sometimes": 0.02,
+     "missing": 0.02
+    },
+    "shares_other": {
+     "Never": 0.778,
+     "Rarely": 0.159,
+     "Sometimes": 0.063,
+     "missing": 0.0
+    },
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.6191488100686383
+   },
+   {
+    "variable": "driving_years",
+    "kind": "categorical",
+    "cramers_v": 0.1345338654633242,
+    "p": 0.7307690390198389,
+    "shares_matched": {
+     "1-3 years": 0.265,
+     "4-7 years": 0.082,
+     "8-10 years": 0.02,
+     "Less than 1 year": 0.612,
+     "missing": 0.02
+    },
+    "shares_other": {
+     "1-3 years": 0.27,
+     "4-7 years": 0.127,
+     "8-10 years": 0.032,
+     "Less than 1 year": 0.571,
+     "missing": 0.0
+    },
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.8414913663105139
+   },
+   {
+    "variable": "driving_frequency",
+    "kind": "categorical",
+    "cramers_v": 0.14405223754157187,
+    "p": 0.802718282335773,
+    "shares_matched": {
+     "Daily": 0.041,
+     "I have my license but do not drive": 0.204,
+     "Monthly": 0.204,
+     "Rarely": 0.449,
+     "Weekly": 0.082,
+     "missing": 0.02
+    },
+    "shares_other": {
+     "Daily": 0.079,
+     "I have my license but do not drive": 0.206,
+     "Monthly": 0.159,
+     "Rarely": 0.46,
+     "Weekly": 0.095,
+     "missing": 0.0
+    },
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.8414913663105139
+   },
+   {
+    "variable": "terrain_experience",
+    "kind": "categorical",
+    "cramers_v": 0.24343350486312781,
+    "p": 0.24905790476969836,
+    "shares_matched": {
+     "1 - Very frequently": 0.082,
+     "2 - Frequently": 0.041,
+     "3 - Occasionally": 0.184,
+     "4 - Rarely": 0.143,
+     "5 - Never": 0.531,
+     "missing": 0.02
+    },
+    "shares_other": {
+     "1 - Very frequently": 0.079,
+     "2 - Frequently": 0.175,
+     "3 - Occasionally": 0.159,
+     "4 - Rarely": 0.175,
+     "5 - Never": 0.413,
+     "missing": 0.0
+    },
+    "n": [
+     49,
+     63
+    ],
+    "fdr_bh": 0.6191488100686383
+   }
+  ],
+  "participant_counts": {
+   "matched": 49,
+   "other": 63
+  },
+  "outcome": {
+   "event_rate_matched": 0.4666666666666667,
+   "event_rate_other": 0.43859649122807015
+  },
+  "coverage": {
+   "n_participants": 67,
+   "n_rows": 572,
+   "crosstab": {
+    "inside EEG span": {
+     "False": 11,
+     "True": 322
+    },
+    "window after EEG end": {
+     "False": 235,
+     "True": 0
+    },
+    "window partly outside EEG span": {
+     "False": 2,
+     "True": 2
+    }
+   },
+   "share_after_eeg_end": 0.41083916083916083,
+   "median_trial_usable": 3.0,
+   "median_trial_after_end": 8.0,
+   "session_link_mismatches": 0
+  }
+ },
+ "artifact_paths": "[]",
+ "status": "completed",
+ "notes": "Gate 4 selection-bias report"
+}

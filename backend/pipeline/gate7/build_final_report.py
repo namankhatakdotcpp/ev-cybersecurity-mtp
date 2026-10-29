@@ -21,8 +21,8 @@ SLMS = ["mistral:7b-instruct", "llama3.1:8b", "phi3:3.8b", "gemma2:9b", "qwen2.5
 
 
 class Reg:
-    def __init__(self, cfg):
-        self.results = cfg["paths_resolved"]["results_dir"]
+    def __init__(self, cfg, results_dir=None):
+        self.results = results_dir if results_dir is not None else cfg["paths_resolved"]["results_dir"]
         self.reg = pd.read_csv(self.results / "registry.csv", dtype=str)
 
     def latest(self, name):
@@ -51,9 +51,10 @@ def table(header, rows):
     return out
 
 
-def build():
-    cfg = load_gate3()
-    R = Reg(cfg)
+def build(results_dir=None, out=None):
+    """results_dir and out default to the repository's results folder and docs/report/FINAL_REPORT.md; a test passes a frozen fixture."""
+    cfg = load_gate3() if results_dir is None else None
+    R = Reg(cfg, results_dir)
     md = []
     runs = {}
 
@@ -162,7 +163,15 @@ def build():
             rows.append([m, v, len(fs), f"{sum(fs) / len(fs):.3f} [{min(fs):.3f}, {max(fs):.3f}]", f"{sum(x['degenerate'] for x in c_['detection_per_seed'])}/{len(fs)}",
                          f"{c_['agreement']['detection']['mean_pairwise_agreement']:.3f}"])
     md += ["**Consistency, 5 seeds at temperature 0.3**", "", *table(["Model", "Variant", "Seeds", "False-safe mean [min, max]", "Degenerate seeds", "Mean pairwise agreement"], rows), ""]
-    md += ["The malicious-override pass was run (600 replies) but is **not scored**; no claim about steering or compliance is made.", ""]
+    X = {m: get("g5_malicious_" + m.replace(":", "_")) for m in SLMS}
+    rows = []
+    for m in SLMS:
+        for v in ("V1", "V2"):
+            x = X[m][v]
+            dd = x["difference_in_compliance"]
+            rows.append([m, v, pp(x["with_override"]["target"], 2), pp(x["without_override"]["target"], 2), f"{dd['point']:+.2f} [{dd['lo']:+.2f}, {dd['hi']:+.2f}]", x["label"]])
+    md += ["**Malicious-override condition (60 designated mixed stations; instruction-following, not detection; clean rerun, Amendment A2)**", "",
+           *table(["Model", "Variant", "Target chosen with override", "Target chosen without", "Difference [CI]", "Label"], rows), ""]
 
     # ---- 7 rubric
     md += ["## 7. Final selection rubric (Protocol v1 section 12; applied mechanically)", ""]
@@ -176,7 +185,7 @@ def build():
     ok = [x for x in cand if 0.7 <= x["slope"] <= 1.3]
     safe = sorted(ok, key=lambda x: (x["fsB"], x["fwB"]))[0]
     close = [x for x in ok if x["fsB"] - safe["fsB"] <= 0.01]
-    md += [f"2. **Best safety-oriented model.** Among {len(ok)} model-set pairs with calibration slope in [0.7, 1.3], the lowest false-safe rate at the recall-0.80 operating point is {name[safe['learner']]}, set {safe['set']}: "
+    md += [f"2. **Best safety-oriented model (nominal winner only).** Among {len(ok)} model-set pairs with calibration slope in [0.7, 1.3], the lowest false-safe rate at the recall-0.80 operating point is {name[safe['learner']]}, set {safe['set']}: "
            f"false-safe {f(safe['fsB'], 2)}, false-warning {f(safe['fwB'], 2)}, calibration slope {f(safe['slope'], 2)}. "
            f"{len(close)} eligible pairs are within 0.01 of that false-safe value, so the choice is the nominal minimum, not a separated winner. "
            f"False-safe is near 1 minus the 0.80 target for every model by construction; the false-warning rate ({f(min(x['fwB'] for x in ok), 2)} to {f(max(x['fwB'] for x in ok), 2)} across eligible models) is the cost, and no operating point is validated.", ""]
@@ -193,10 +202,12 @@ def build():
     el.sort(key=lambda m: (M[m]["detection"][key]["false_safe"]["p"], -(1 - M[m]["detection"][key]["false_warning"]["p"])))
     sl = el[0]
     ds = M[sl]["detection"][key]
-    md += [f"4. **Best SLM (rule: lowest false-safe rate first, on the pre-committed V2 headline; degenerate models excluded).** {sl}: false-safe {pp(ds['false_safe'], 2)}, false-warning {pp(ds['false_warning'], 2)}, "
-           f"balanced accuracy {f(ds['balanced_accuracy'])} against the best reference {ds['best_reference']} at {f(ds['best_reference_balanced_accuracy'])}. "
-           "The selection is the least-bad under the rule, not a good detector: no model beats the best reference, and low false-safe here comes with a high false-warning rate "
-           "(models warn on almost any kiosk with an image description). Latency and memory are in the Gate 5 master table.", ""]
+    md += ["4. **Best SLM: not named.** The protocol rule (lowest false-safe rate first) is reported below for completeness, but it is not a claim that any model is best. "
+           "The defensible statement is that **no SLM showed reliable detection above the rule baselines**, in either variant. "
+           "V2 carries the image-description leak (the descriptions can state or hint at the image type, which is itself a strong cue), and low false-safe in V2 comes with a high false-warning rate, because the models warn on almost any kiosk with an image description.",
+           "",
+           f"   Rule output only (pre-committed V2 headline, degenerate models excluded): {sl}, false-safe {pp(ds['false_safe'], 2)}, false-warning {pp(ds['false_warning'], 2)}, "
+           f"balanced accuracy {f(ds['balanced_accuracy'])} against the best reference {ds['best_reference']} at {f(ds['best_reference_balanced_accuracy'])}. Latency and memory are in the Gate 5 master table.", ""]
     k1 = "V1|all"
     el1 = sorted([m for m in SLMS if not M[m]["detection"][k1]["degenerate"]["flag"]], key=lambda m: M[m]["detection"][k1]["false_safe"]["p"])
     md += [f"   Same rule on V1 (cue-free), for transparency: {el1[0]} has the lowest false-safe among non-degenerate models ({pp(M[el1[0]]['detection'][k1]['false_safe'], 2)}, false-warning {pp(M[el1[0]]['detection'][k1]['false_warning'], 2)}); "
@@ -212,7 +223,8 @@ def build():
            "- The assistant's replies and the benign or malicious condition were not logged, so their effect cannot be assessed.",
            "- Several ridge and boosting grids selected their weakest setting; a wider ridge grid gave the same conclusion.",
            "- SLM scenario set: quota-sampled, text-only, one main decoding setting, image descriptions produced by another model; detection is not blind to the investigators.",
-           "- A provisional scoring look preceded the Gate 5 scoring spec (D078); one mistral consistency item is missing and its file contains duplicates (D080).",
+           "- A provisional scoring look preceded the Gate 5 scoring spec (D078), including the override-compliance figures; the malicious condition was then rerun and scored under a rule written first (Amendment A2).",
+           "- The mistral consistency log contains duplicate item-seed pairs from a resumed run (the first reply per pair is scored) and one missing pair was filled afterwards (D083); the override condition uses one wording, one target rule and 60 stations.",
            "- Many strata and sensitivity runs; unadjusted p-values are descriptive.", "",
            "## 9. Claims register", "",
            *table(["Claim", "Status"], [
@@ -220,18 +232,19 @@ def build():
                ["Any pre-specified ML model beats exposure-only B0", "No"],
                ["EEG adds information", "Not established (biased subset, low power)"],
                ["Skipping follows exposure", "Not supported"],
-               ["Any tested SLM detects attacked kiosks better than simple rules", "No"],
+               ["Any tested SLM showed reliable detection above the rule baselines", "No (V2 also carries the image-description leak)"],
+               ["A best SLM", "Not claimed (the rule output depends on the variant and rests on a high false-warning rate)"],
                ["Any tested SLM recommends a safe kiosk above chance", "No"],
-               ["An SLM can be steered by a malicious instruction", "Not assessed (pass run, not scored)"],
+               ["The tested SLMs follow an explicit instruction to recommend an attacked kiosk", "Yes in this setup (instruction-following only; says nothing about the in-game assistant)"],
                ["A warning operating point is validated", "No"],
                ["A best overall system", "Withheld"]]), "",
            "## 10. Out of scope and future work", "",
            "The human experiment on automation bias needs new data (three randomised assistant conditions, assistant replies and condition logged, decision latency and pre-decision gaze logged, full-session EEG, a pre-registered scenario set and primary outcome). "
            "Video-based AOI analysis is closed for the existing data (D060 to D062).", ""]
 
-    out = REPO_ROOT / "docs" / "report" / "FINAL_REPORT.md"
+    out = out or REPO_ROOT / "docs" / "report" / "FINAL_REPORT.md"
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text("\n".join(md) + "\n", encoding="utf-8")
+    out.write_bytes(("\n".join(md) + "\n").encode("utf-8"))      # bytes, so the file (and its checksum) is the same on every platform
     print("wrote", out)
 
 

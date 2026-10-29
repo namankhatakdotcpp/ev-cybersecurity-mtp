@@ -1,0 +1,63 @@
+{
+ "experiment_id": "g3_secondary_S1_20261029_141204_766413",
+ "timestamp": "2026-10-29T14:12:04",
+ "protocol_version": "v1",
+ "protocol_commit": "58e59c0e5fd2dc1cdd647336363984f349457ec7",
+ "dataset_version": "4788b35f9785821f27723aee2cb6103bfb096c7a03c64b02102fafa12a3e4d25",
+ "feature_version": "161577aecc0b96dcfa593733008865a85dc9ea5a79aa5a7de0bf6ab056867654",
+ "label_version": "T1-v1",
+ "split_scheme": "5x20 repeated participant-grouped nested CV",
+ "seed": "[1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120]",
+ "model": "ridge logistic with offset",
+ "hyperparameters": {
+  "config": "configs\\gate3_grid.yaml"
+ },
+ "environment": "python 3.10.0rc2; Windows 10; numpy 2.2.6; scipy 1.15.3; pandas 2.3.3; scikit-learn 1.7.2; statsmodels 0.15.0",
+ "git_commit": "dca9470c670b285e1bddce18ae0b41b6ea1693ef+dirty",
+ "metrics": {
+  "n_rows": 492,
+  "n_participants": 112,
+  "n_events": 220,
+  "lrt": {
+   "stat": 7.797924287785008,
+   "df": 6,
+   "p": 0.2532849103195251,
+   "sigma_red": 0.00010000000000000009,
+   "sigma_full": 0.00010000000000000009,
+   "sigma_at_lower_bound": true
+  },
+  "auroc_G": 0.6329336564171122,
+  "auroc_G_ci": [
+   0.5755795856805127,
+   0.6859313888941441
+  ],
+  "auroc_B0": 0.6270437834224597,
+  "auroc_B0_ci": [
+   0.5692210750854527,
+   0.6811257598863323
+  ],
+  "delta_auroc": {
+   "mean": 0.00584731111065316,
+   "ci": [
+    -0.0054809866689737394,
+    0.01746667608768867
+   ],
+   "se": 0.0058599441590078405,
+   "p_boot": 0.331
+  },
+  "permutation": {
+   "B": 200,
+   "p": 0.4527363184079602,
+   "perm_auc_mean": 0.6328089237967914,
+   "perm_auc_q95": 0.6487821273395721
+  },
+  "holm": {
+   "p": 0.2532849103195251,
+   "holm_adjusted_upper_bound": 1.0
+  },
+  "holm_note": "family {S1,S2,S5,S6}; S5 and S6 run in later gates, so these are upper bounds at family size 4"
+ },
+ "artifact_paths": "[]",
+ "status": "completed",
+ "notes": "G alone vs exposure baseline"
+}
