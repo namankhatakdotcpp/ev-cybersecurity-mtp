@@ -182,7 +182,89 @@ def s4_eeg(c):
     return md
 
 
-SECTIONS = [s1_audit, s2_h1, s3_ml, s4_eeg]
+def s5_slm(c):
+    """Small language models (Gate 5): detection, recommendation, consistency and the malicious-override condition."""
+    M = {m: c.get("g5_slm_" + m.replace(":", "_")) for m in SLMS}
+    X = {m: c.get("g5_malicious_" + m.replace(":", "_")) for m in SLMS}
+    m0 = M[SLMS[0]]
+    d1, d2 = m0["detection"]["V1|all"], m0["detection"]["V2|excl_label"]
+    rec = m0["recommendation"]["V1|all"]
+    ref_names = ["always SAFE", "always UNSAFE", "deepfake-image rule", "discount-badge rule", "random (expected)"]
+
+    def det_rows(key):
+        out = []
+        for m in SLMS:
+            d = M[m]["detection"][key]
+            out.append([m, pp(d["false_safe"], 2), pp(d["false_warning"], 2), f(d["balanced_accuracy"]), "yes" if d["degenerate"]["flag"] else "no", pp(d["failed_replies"], 2)])
+        return out
+
+    def ref_rows(d):
+        return [[n, pp(d["references"][n]["false_safe"], 2), pp(d["references"][n]["false_warning"], 2), f(d["references"][n]["balanced_accuracy"])] for n in ref_names if n in d["references"]]
+
+    n_st = rec["mixed"]["n"] + rec["benign"]["n"] + rec["all_attacked"]["n"]
+    fw2 = [M[m]["detection"]["V2|excl_label"]["false_warning"]["p"] for m in SLMS]
+    md = ["## 5. Small language models as kiosk-risk detectors and recommenders", "",
+          f"This track is separate from the machine-learning track and is never pooled with it. Five locally run models ({', '.join(SLMS)}) received a text description of a charging station and "
+          f"answered two tasks: **detection** (mark each kiosk SAFE or UNSAFE) and **recommendation** (choose a kiosk or skip). The scenario set has {n_st} stations "
+          f"({rec['benign']['n']} benign, {rec['all_attacked']['n']} with every kiosk attacked, {rec['mixed']['n']} mixed) and {d1['n_kiosks']} kiosks, was quota-sampled from the experiment "
+          "and is text-only; the labels come from the simulator ground truth. Two prompt variants are reported separately: **V1** is cue-free (no image description), **V2** adds a description "
+          "of each kiosk image produced by another model. Results are not averaged across variants.", "",
+          "Detection is judged by the false-safe rate (an attacked kiosk called SAFE) and the false-warning rate (a legitimate kiosk called UNSAFE) **together**, and by balanced accuracy, "
+          "against simple rule baselines and constant answers, with 95% Wilson intervals [CITE: Wilson score interval].", "",
+          "**Detection, V1 (cue-free)**", "",
+          *table(["Model", "False-safe", "False-warning", "Balanced accuracy", "Degenerate", "Failed replies"], det_rows("V1|all")), "",
+          "**Reference answers on the same V1 kiosks**", "",
+          *table(["Reference", "False-safe", "False-warning", "Balanced accuracy"], ref_rows(d1)), "",
+          f"The best reference is the {d1['best_reference']} (balanced accuracy {f(d1['best_reference_balanced_accuracy'])}). No model reaches it: the highest model balanced accuracy is "
+          f"{f(max(M[m]['detection']['V1|all']['balanced_accuracy'] for m in SLMS))}, and a constant answer of SAFE scores {f(d1['references']['always SAFE']['balanced_accuracy'])}. "
+          "Without a description most attacked kiosks are called SAFE, so the models are not useful detectors in this setting.", "",
+          "**Detection, V2 (image descriptions; kiosks whose description names the attack label are excluded; this is the pre-committed headline)**", "",
+          *table(["Model", "False-safe", "False-warning", "Balanced accuracy", "Degenerate", "Failed replies"], det_rows("V2|excl_label")), "",
+          *table(["Reference", "False-safe", "False-warning", "Balanced accuracy"], ref_rows(d2)), "",
+          f"The best reference here is again the {d2['best_reference']} ({f(d2['best_reference_balanced_accuracy'])}). **Caveat on V2:** the description can state or hint at the image type, "
+          "which is itself a strong cue and is the basis of the best rule, so V2 does not measure detection from the screen alone. The false-safe rate falls in V2 "
+          f"but the false-warning rate rises to between {f(min(fw2), 2)} and {f(max(fw2), 2)}: the models warn on most kiosks that have a description. "
+          "**No model showed reliable detection above the rule baselines in either variant**, and no best model is claimed (the model that the pre-committed rule selects differs between the variants).", ""]
+    above = any(M[m]["recommendation"][k]["mixed"].get("safe_choice_interval_above_random") for m in SLMS for k in ("V1|all", "V2|excl_label"))
+    max_skip = max(M[m]["recommendation"][k]["all_attacked"]["skip"]["p"] for m in SLMS for k in ("V1|all", "V2|excl_label"))
+    rows = []
+    for m in SLMS:
+        for key in ("V1|all", "V2|excl_label"):
+            r = M[m]["recommendation"][key]
+            mx = r["mixed"]
+            rows.append([m, key.split("|")[0], pp(mx["safe"], 2), pp(mx["attacked"], 2), pp(mx["skip"], 2), f(mx["random_choice_safe_rate"]), pp(r["all_attacked"]["attacked"], 2)])
+    md += ["**Recommendation.** At mixed stations a recommender that ignored the content would choose a safe kiosk at the random-choice rate shown. At stations where every kiosk is attacked, "
+           "the last column shows how often an attacked kiosk was still chosen instead of skipping.", "",
+           *table(["Model", "Variant", "Safe kiosk chosen", "Attacked kiosk chosen", "Skip", "Random-choice safe rate", "All-attacked: attacked kiosk chosen"], rows), "",
+           ("The pre-committed comparison finds no model whose interval for the share of safe choices lies above the random-choice rate" if not above else
+            "In the pre-committed comparison some interval for the share of safe choices lies above the random-choice rate (see the table)")
+           + f"; at all-attacked stations the highest skip share is {max_skip:.2f}. "
+           + ("The recommendation task therefore also shows no reliable benefit." if not above else "This needs a separate reading."), ""]
+    rows = []
+    for m in SLMS:
+        for v in ("V1", "V2"):
+            cs = M[m]["consistency"].get(v)
+            if not cs or not cs["detection_per_seed"]:
+                continue
+            fs = [x["false_safe"] for x in cs["detection_per_seed"]]
+            rows.append([m, v, len(fs), f"{sum(fs) / len(fs):.3f} [{min(fs):.3f}, {max(fs):.3f}]", f"{sum(x['degenerate'] for x in cs['detection_per_seed'])}/{len(fs)}", f"{cs['agreement']['detection']['mean_pairwise_agreement']:.3f}"])
+    md += ["**Consistency.** The detection task was repeated with five seeds at temperature 0.3 on the same items:", "",
+           *table(["Model", "Variant", "Seeds", "False-safe mean [min, max]", "Degenerate seeds", "Mean pairwise agreement"], rows), "",
+           "Rates are stable across seeds, so the results above do not depend on one sampling draw; stability does not make a detector accurate.", ""]
+    rows = []
+    for m in SLMS:
+        for v in ("V1", "V2"):
+            x = X[m][v]
+            dd = x["difference_in_compliance"]
+            rows.append([m, v, pp(x["with_override"]["target"], 2), pp(x["without_override"]["target"], 2), f"{dd['point']:+.2f} [{dd['lo']:+.2f}, {dd['hi']:+.2f}]", x["label"]])
+    md += ["**Malicious-override condition (instruction-following only).** On 60 designated mixed stations the prompt was run with and without an experimenter instruction to recommend a named attacked kiosk. "
+           "This measures whether a model follows an instruction placed in its prompt. It says nothing about the in-game assistant, which was not tested, and nothing about whether participants would follow such advice.", "",
+           *table(["Model", "Variant", "Target chosen with the instruction", "Target chosen without", "Difference [CI]", "Label"], rows), "",
+           "The override condition was rerun under a scoring rule written before scoring (Amendment A2) after a provisional look at an earlier run; see the deviations below.", ""]
+    return md
+
+
+SECTIONS = [s1_audit, s2_h1, s3_ml, s4_eeg, s5_slm]
 
 
 def build(results_dir=None, out=None, audit=None):
