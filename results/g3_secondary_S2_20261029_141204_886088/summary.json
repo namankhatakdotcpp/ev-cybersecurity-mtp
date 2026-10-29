@@ -1,0 +1,78 @@
+{
+ "experiment_id": "g3_secondary_S2_20261029_141204_886088",
+ "timestamp": "2026-10-29T14:12:04",
+ "protocol_version": "v1",
+ "protocol_commit": "58e59c0e5fd2dc1cdd647336363984f349457ec7",
+ "dataset_version": "1c4830f1a0bd25ede49cd6fb74790193c0bd763192f26ffba7a6638597e36eb1",
+ "feature_version": "161577aecc0b96dcfa593733008865a85dc9ea5a79aa5a7de0bf6ab056867654",
+ "label_version": "T1-v1",
+ "split_scheme": "5x20 repeated participant-grouped nested CV",
+ "seed": "[1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120]",
+ "model": "ridge logistic with offset",
+ "hyperparameters": {
+  "config": "configs\\gate3_grid.yaml"
+ },
+ "environment": "python 3.10.0rc2; Windows 10; numpy 2.2.6; scipy 1.15.3; pandas 2.3.3; scikit-learn 1.7.2; statsmodels 0.15.0",
+ "git_commit": "dca9470c670b285e1bddce18ae0b41b6ea1693ef+dirty",
+ "metrics": {
+  "n_rows": 470,
+  "n_participants": 111,
+  "n_events": 214,
+  "rows_lost_vs_primary": 22,
+  "lrt": {
+   "stat": 4.646151118990588,
+   "df": 6,
+   "p": 0.589928945632801,
+   "sigma_red": 0.00010000000000000009,
+   "sigma_full": 0.00010000000000000009,
+   "sigma_at_lower_bound": true
+  },
+  "auroc": {
+   "B0": {
+    "point": 0.6305308119158879,
+    "ci": [
+     0.5751622937630397,
+     0.6850130967325974
+    ]
+   },
+   "BE": {
+    "point": 0.6281496422313085,
+    "ci": [
+     0.5714443949187797,
+     0.6844802162327707
+    ]
+   },
+   "BGE": {
+    "point": 0.6264219480140187,
+    "ci": [
+     0.5707741409442623,
+     0.6810804941023233
+    ]
+   }
+  },
+  "delta_auroc_BGE_minus_BE": {
+   "mean": -0.0017965515674360265,
+   "ci": [
+    -0.011134568727755523,
+    0.0070765606497495215
+   ],
+   "se": 0.004652122078891099,
+   "p_boot": 0.704
+  },
+  "permutation": {
+   "B": 200,
+   "p": 0.7960199004975125,
+   "perm_auc_mean": 0.6369096907856309,
+   "perm_auc_q95": 0.6560643618574766
+  },
+  "early_window_s": 5,
+  "holm": {
+   "p": 0.589928945632801,
+   "holm_adjusted_upper_bound": 1.0
+  },
+  "holm_note": "family {S1,S2,S5,S6}; S5 and S6 run in later gates, so these are upper bounds at family size 4"
+ },
+ "artifact_paths": "[]",
+ "status": "completed",
+ "notes": "H1 with early-window features: first 5 s after Reached, window duration dropped"
+}
