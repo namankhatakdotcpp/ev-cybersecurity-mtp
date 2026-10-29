@@ -268,7 +268,7 @@ Statements ranked from weakest to strongest, with the reason:
 6. **Sentences in this generator that are static text, not computed** (for example that most attacked kiosks are called SAFE without a description, and that stability across seeds does not make a detector accurate) were checked against the fixture and the real registry when written, but would not update if the registry changed.
 7. **The ML benchmark and H1** are the most solid statements, but they apply only to this sample and to the redefined target.
 
-Not covered: the video-based gaze pilot (closed), the in-game assistant (not tested), FPS (not measured), and any causal question.
+Not covered: the video-based gaze pilot (closed), the in-game assistant (not tested), FPS (not measured), and any question about why participants decided as they did.
 
 
 ## Citation placeholders

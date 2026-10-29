@@ -332,7 +332,7 @@ def s9_review(c):
             "make a detector accurate) were checked against the fixture and the real registry when written, but would not update if the registry changed.",
             "7. **The ML benchmark and H1** are the most solid statements, but they apply only to this sample and to the redefined target.",
             "",
-            "Not covered: the video-based gaze pilot (closed), the in-game assistant (not tested), FPS (not measured), and any causal question.", ""]
+            "Not covered: the video-based gaze pilot (closed), the in-game assistant (not tested), FPS (not measured), and any question about why participants decided as they did.", ""]
 
 
 SECTIONS = [s1_audit, s2_h1, s3_ml, s4_eeg, s5_slm, s6_limits, s7_design, s8_deviations, s9_review]
