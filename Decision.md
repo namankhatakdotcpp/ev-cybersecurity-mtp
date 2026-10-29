@@ -3328,3 +3328,38 @@ Gate 5 results carry a forking-paths caveat: the scoring spec was fixed after a 
 
 ### Remarks
 Other process facts for the methods chapter: the `protocol-v1` tag was moved to the rewritten commit (file blob unchanged); `HASH_MAP.md` maps old to new hashes. The repository is public (checked against the GitHub API on 2026-10-29), so the already-public content listed in `docs/audit/PUSH_REVIEW.md` section 3 is exposed now.
+
+
+---
+
+## D079
+
+### Date
+2026-10-29
+
+### Decision
+Wrote a progress report for the supervisor (`docs/report/MTP_progress_report_2026-10-29.docx`, kept local and not committed) and decided to push `main` to GitHub on the user's instruction, after repeating the pre-push checks.
+
+### Context / Problem
+The supervisor needs a summary of the day's work and what is left. The user also asked that Decision.md keep being updated and be pushed. The Gate 5 consistency pass was still running (mistral, llama3.1 and phi3 complete at 4,800 rows; gemma2 in progress; qwen2.5 not started), so the Gate 5 report is not final.
+
+### Evidence
+Report contents are taken from Decision.md D059 to D078, `docs/analysis/GATE2_report.md` to `GATE6_report.md`, and `results/master_table_gate5.md`. `results/_slm/consistency/mistral_7b-instruct.jsonl` holds 6,033 lines against 4,800 expected; scoring keeps the first reply per (key, seed) (D076), so the extra lines do not enter the scores, but the cause of the extra lines is not yet explained.
+
+### Alternatives Considered
+Wait for the consistency pass before reporting or pushing; push only Decision.md.
+
+### Why Alternatives Were Not Chosen
+The report states the pass as running and its figures as pending. A push of a single file is not possible in git without pushing the commits before it; the 52 local commits go together.
+
+### Implementation
+Report generated with a script kept outside the repository. Push of `main` only (no `--all`, `--mirror` or `--tags`), per `docs/audit/PUSH_REVIEW.md` resolution.
+
+### Status
+Report complete. Consistency scoring, re-registration of Gate 5 rows, the Gate 5 report extension, the malicious-pass scoring decision and Gate 7 remain.
+
+### Impact
+The remote will contain the rewritten history from D077 (hash map in `docs/audit/HASH_MAP.md`). The pre-push review's section 3 items already on `origin/main` are unchanged.
+
+### Remarks
+Decision.md has two entries numbered D071 and two numbered D072; the duplicates are kept as written and noted here rather than renumbered.
