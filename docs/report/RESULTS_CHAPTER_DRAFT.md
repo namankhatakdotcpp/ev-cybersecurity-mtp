@@ -216,6 +216,19 @@ Rates are stable across seeds, so the results above do not depend on one samplin
 
 The override condition was rerun under a scoring rule written before scoring (Amendment A2) after a provisional look at an earlier run; see the deviations below.
 
+## 6. Limitations
+
+- **No untouched test set.** Earlier analysis rounds (D045 to D063) iterated on the same participants, and the later gates reuse the same rows. Every result here is pre-specified but exploratory, and a confirmatory claim would need new data or a pre-registered analysis.
+- **The target was redefined after the data had been seen** (Gate 0), so the redefinition was not blind. The choice was motivated by the audit finding that the original label follows exposure.
+- **The best predictive model is the exposure-only reference.** No behaviour, gaze or EEG feature set was associated with better out-of-sample discrimination than exposure and design alone, so the benchmark does not support any learned detector.
+- **Power.** The primary set has a few hundred rows and a couple of hundred events; the EEG subset has about a third of the rows. Intervals around AUROC differences are wide, so the results are "not detected", which is different from "no effect".
+- **EEG selection and quality.** The matched subset favours early stations and a particular collection period; the headset has four channels, minimal preprocessing was applied, and the window is defined by the decision event.
+- **The decision window ends at the choice.** Window duration and gaze counts are therefore mechanically linked to skip versus charge, which is why the redefined target conditions on a charge.
+- **The assistant was not logged.** The in-game assistant replies and the benign or malicious condition are not in the data, so their association with decisions cannot be assessed.
+- **Several grids chose their weakest setting**; a wider ridge grid gave the same conclusion, but tuning remains a limited part of the picture.
+- **Language-model scenario set.** Quota-sampled, text-only, one main decoding setting, image descriptions written by another model; the investigators were not blind to the labels. The results do not transfer to a deployed assistant or to human behaviour.
+- **Multiplicity.** Many strata and sensitivity runs were made; unadjusted p-values are descriptive. Where a Holm bound or an FDR value is given, it covers only the family named.
+
 
 ## Citation placeholders
 
