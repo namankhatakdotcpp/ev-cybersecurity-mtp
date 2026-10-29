@@ -3536,3 +3536,36 @@ No analysis result, registry row or committed report changed. Copies already in 
 
 ### Remarks
 Open: the participant-code and session-folder linkage in the older public files needs the supervisor's decision under the consent terms (see `docs/audit/LEGACY_EXPOSURE_PLAN.md`).
+
+
+## D085
+
+### Date
+2026-10-29
+
+### Decision
+Housekeeping after the push, documents only: wrote a plan for the exposure that remains in older public files, an inventory of the remaining machine-specific paths with a proposed fix, a reproduction guide, and a one-page supervisor brief. No code, data, registry row or earlier result was changed or regenerated.
+
+### Context / Problem
+After D084 the local backups are gone and the repository is private (user's report). Session folder names remain in older files (`Decision.md`, `backend/gaze/aoi_free_pilot.py`, `backend/pipeline/feature_table.csv`), 31 lines in 13 Python files still carry machine-specific paths, and there was no single guide to regenerate the tables and reports.
+
+### Evidence
+Items confirmed complete before starting, with commits: consistency pass scored (`2ea4be7`, `5c04fc6`, `72a20f2`); malicious rerun scored under Amendment A2 (`3784ea5`, `a7297de`, `1eeedd9`); Gate 5 report (`358c7a0`); Gate 7 final report and test (`94344e0`, `17dde58`, `a54ad46`); Step 5 outline (`d62b6a2`, D081); registry holds 33 rows including five `g5_malicious_*` and fifteen `g5_slm_*` rows. The Word progress report exists locally, is untracked by design, and its text already includes the A2 override result. Guard test passes; 47 tests pass under `backend/pipeline`.
+
+### Alternatives Considered
+Fix the paths and redact the legacy files now.
+
+### Why Alternatives Were Not Chosen
+Changing `feature_table.csv` or any pipeline input changes recorded checksums and needs the user's approval and the supervisor's view on the consent terms; the path refactor needs the rebuild-and-compare acceptance test.
+
+### Implementation
+New files: `docs/audit/LEGACY_EXPOSURE_PLAN.md`, `docs/audit/HARDCODED_PATHS.md`, `docs/REPRODUCE.md`, `docs/report/SUPERVISOR_BRIEF.md`. Nothing pushed.
+
+### Status
+Complete. Open items: supervisor's decision on the participant-code and session-folder linkage; approval of the path refactor and its acceptance test.
+
+### Impact
+None on any result. D083's remark that the Word report is not regenerated is out of date: its text already contains the override results.
+
+### Remarks
+Commits are local only; the user pushes `main` from their own terminal.
