@@ -2880,3 +2880,38 @@ D052's gaze association is not supported once exposure is offset and the skip/ch
 
 ### Remarks
 S3 must not be chased on these participants (a data-driven fork); a confirmatory check would need new data under a pre-specified analysis. The narrow Claim B interval reflects heavy shrinkage, not proof that small effects were excluded for unpenalised models.
+
+
+---
+
+## D068
+
+### Date
+2026-10-29
+
+### Decision
+Ran Gate 3 (ML benchmark) of Protocol v1 and generated the master comparison table programmatically from the experiment registry. **No pre-specified model or modality set beats the exposure-only reference B0 on T1** (primary set: 492 rows, 112 participants, 220 events; all paired CIs against B0 span zero or are negative; ridge B+G minus B reproduces the Gate 2 null at +0.004 [-0.006, +0.015]). S1 (gaze alone vs exposure baseline): LRT p = 0.253, delta AUROC +0.006 [-0.005, +0.017]. S2 (H1 with the first 5 s only): LRT p = 0.590, delta AUROC -0.002 [-0.011, +0.007]. Exploratory S8: random forest is worse than ridge when behaviour or gaze is added (delta AUROC -0.022 to -0.039, FDR about 0.03-0.04). The XGBoost/LightGBM challenger was not run (entry criterion not met). Report: `docs/analysis/GATE3_report.md`; tables: `results/master_table_gate3.md`.
+
+### Context / Problem
+You approved Gate 3 with S1 and S2 and a programmatically generated master table. The frozen protocol left several details open for this gate.
+
+### Evidence
+Registry runs `g3_grid_ridge/rf/hgb`, `g3_secondary_S1/S2`, `g3_exploratory_S8` (code commit dca9470; dataset hash recorded). 28 tests passed before the runs (engine, table, CV, benchmark machinery). Ridge results equal Gate 2's. Hyperparameter selection sat at the weakest end of the grid for ridge (95-99% at C = 0.01) and boosting (98-100% for sets B, G, BG). At the recall-0.80 operating point the false-warning rate is 0.59-0.61 for ridge on every set and 0.60-0.74 for tree models.
+
+### Alternatives Considered
+(a) Extend the grids after seeing the boundary selections; (b) run XGBoost/LightGBM anyway; (c) add the tree-model permutation tests; (d) define operating point B literally as the smallest threshold reaching recall 0.80.
+
+### Why Alternatives Were Not Chosen
+(a) and (b) would be post-hoc tuning of a null result, and the protocol allows the challenger only if a pre-specified model beats B0. (c) is outside the pre-specified set for this gate. (d) the literal smallest threshold predicts almost every case as positive, so the implemented reading is the largest threshold that still reaches recall 0.80 (stated in the config before the run).
+
+### Implementation
+`configs/gate3_grid.yaml` (written and committed first, filling the grids, the operating-point interpretation, Holm family and S2 definition); `backend/pipeline/gate2/{benchmark,early_window,run_gate3,master_table}.py`; tests; registry rows and run summaries (row-level artifacts and tables are gitignored); `results/master_table_gate3.md` and `_long.csv`; `docs/analysis/GATE3_report.md`.
+
+### Status
+Gate 3 complete; awaiting approval for Gate 4 (EEG, matched subset, exploratory). Holm adjustment for S1/S2 is provisional at family size 4 (S5 and S6 pending); both unadjusted p-values exceed 0.25 so the upper bounds are 1.0. No operating point is validated.
+
+### Impact
+Reinforces D064/D067: no evidence that behaviour or gaze improves prediction of the choice of an attacked kiosk beyond layout exposure. Supersedes earlier ablations (D037, D045-D057) as evidence about modality value on this target.
+
+### Remarks
+The master tables are the reference for numbers; the report quotes headline figures only. The unadjusted tree-model deficits (S8) are exploratory and grid-limited. The grid-boundary selections suggest the problem lacks signal beyond the offset, not that wider grids would fail; that was not tested.
