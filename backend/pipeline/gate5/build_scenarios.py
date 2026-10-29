@@ -1,4 +1,4 @@
-﻿"""Build the SLM scenario set for Gate 5 (Protocol v1 section 9) from the logged station layouts.
+"""Build the SLM scenario set for Gate 5 (Protocol v1 section 9) from the logged station layouts.
 
 Ground truth comes only from simulation metadata (the layout's attack flag and attack mode per kiosk), never from a model.
 The inputs file (text shown to a model) and the truth file are separate so that a harness cannot leak answers. Neither

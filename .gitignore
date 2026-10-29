@@ -53,3 +53,4 @@ Varjo/
 # Gate 2 outputs: row-level artifacts and analysis tables stay local; registry.csv and per-run summary.json are tracked
 results/_tables/
 results/**/artifacts/
+results/_slm/

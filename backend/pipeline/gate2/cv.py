@@ -1,4 +1,4 @@
-﻿"""Claim B machinery (Protocol v1 section 4): repeated stratified participant-grouped nested CV with a ridge
+"""Claim B machinery (Protocol v1 section 4): repeated stratified participant-grouped nested CV with a ridge
 logistic learner and a fixed exposure offset, participant-level bootstrap, and participant-block permutation.
 
 All preprocessing (log1p, z-scoring), hyperparameter selection and any other fitted step happens inside the

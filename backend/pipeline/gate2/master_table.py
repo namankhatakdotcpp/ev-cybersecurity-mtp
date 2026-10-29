@@ -1,4 +1,4 @@
-﻿"""Generate the Gate 3 master comparison tables programmatically from the experiment registry (Protocol v1 section 13).
+"""Generate the Gate 3 master comparison tables programmatically from the experiment registry (Protocol v1 section 13).
 Reads only results/registry.csv and the per-run summary.json files; nothing is copied by hand.
 
   python -m backend.pipeline.gate2.master_table      ->  results/master_table_gate3.md and .csv
