@@ -2775,3 +2775,38 @@ Reframes earlier results as preliminary or invalid for modality claims (D037, D0
 
 ### Remarks
 Earlier entries are not edited. This entry supersedes none of them; it adds a verification layer. Wording rule going forward: "associated with" and "predictive of", never causal.
+
+
+---
+
+## D065
+
+### Date
+2026-10-29
+
+### Decision
+Drafted Protocol v1 (`docs/protocol/PROTOCOL_v1.md`) for approval, as Gate 1 of the gated research protocol (D064). **The primary target is redefined to control for exposure:** among charge decisions at informative stations (at least one attacked and one safe available kiosk), whether the participant chose an attacked kiosk, with `logit(attacked share of available kiosks)` as an offset in every model. The single primary hypothesis is B+exposure vs B+G+exposure (six AOI-free gaze features). The legacy `risky` label is kept only as an exploratory secondary outcome. Documents only: no training, no code change.
+
+### Context / Problem
+Gate 0 (D064) showed the legacy `risky` target is dominated by randomised exposure and by whether the participant charged at all. You approved Gate 1 and answered: ignore the "~49 positive participants" question for now; redefine the primary target to control for exposure; use the recommendations for the remaining open questions (exclusion rules E1-E6, config-driven paths and a run registry in later gates, treat all existing-data results as exploratory, consider new data for confirmation).
+
+### Evidence
+Read-only counts from raw logs: 516 charge decisions at informative stations (115 participants, 233 attacked-kiosk choices, 45.2%); 492 with gaze (112 participants, 220 events); 150 with gaze and EEG (49 participants, 70 events); 87 of 115 participants have both outcomes; residual intraclass correlation after exposure 0.000 (imprecise at a median of 4 rows per participant); descriptive AUROC 0.659 for the exposure offset alone and 0.790 for the visible image type of the chosen kiosk (the decision itself, so not a feature). Approximate planning figures: detectable odds ratio about 1.29 per SD for one predictor on the primary set, about 1.58 on the matched EEG set; detectable paired ΔAUROC about 0.03-0.04 and 0.07-0.10 respectively (assumption: correlated predictions).
+
+### Alternatives Considered
+(a) Keep the legacy `risky` target and add exposure as a covariate. (b) Model kiosk choice directly (conditional logit over available kiosks). (c) Predict participant-level vulnerability.
+
+### Why Alternatives Were Not Chosen
+(a) leaves the skip/charge component inside the label, which made the earlier AUROCs a skip-vs-charge artifact. (b) is a good later extension but needs per-kiosk cues and more modelling choices than the single pre-specified comparison allows. (c) discards the repeated-decision information; most participants have several informative decisions.
+
+### Implementation
+`docs/protocol/PROTOCOL_v1.md` (new). Nothing else changed.
+
+### Status
+Draft, awaiting approval; not frozen. Freezing records the protocol's commit hash in the registry. Estimation engine for the mixed model is undecided (R is not installed here).
+
+### Impact
+Replaces the legacy target as the primary one for Gates 2-7 if approved. Does not edit D045-D064. The earlier ablations remain on record as answers to a different question.
+
+### Remarks
+The protocol is not blind: the redefinition and the primary test were chosen after Gate 0 showed near-chance gaze signal among charges. All existing-data results will be labelled exploratory with respect to that choice; only new data could be confirmatory.
