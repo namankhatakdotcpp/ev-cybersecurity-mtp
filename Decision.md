@@ -3089,3 +3089,37 @@ None on ML results. The SLM track stays separate and is never ranked against the
 
 ### Remarks
 The malicious-condition numbers show that a single instruction line makes all five models recommend an attacked kiosk, which is a property of the instruction-following behaviour tested here, not evidence about human responses to a manipulated assistant.
+
+---
+
+## D072
+
+### Date
+2026-10-29
+
+### Decision
+Ran a **deliberately reduced Gate 6**: descriptive coefficients and an error analysis of the exposure-only reference B0 only. Did not run SHAP or permutation importance. Exploratory and descriptive; no hypothesis test.
+
+### Context / Problem
+Protocol v1 allowed interpretability for the selected model. No model beat B0 in Gate 3 (D068) and the SLM track is separate (D070/D071), so interpretability of a model without signal would describe noise. You approved Step 1 and asked for the reduced Gate 6.
+
+### Evidence
+Primary set 492 rows, 112 participants, 220 events. B0 covariates are all null (unpenalised odds ratios 0.92 to 1.18, intervals spanning 1); free exposure slope 1.10 [0.68, 1.52]. Observed attacked-choice rate 0.447 vs 0.493 expected from exposure alone (difference -0.046 [-0.088, -0.004], participant bootstrap). B0 is calibrated overall and by number of attacked kiosks, trial index bin and collection period (all intervals include zero). Reproduced the Gate 3 B0 out-of-fold AUROC (0.628 vs 0.627 in D068) before using it.
+
+### Alternatives Considered
+(a) SHAP or permutation importance for the best-looking Gate 3 model; (b) skip Gate 6 entirely.
+
+### Why Alternatives Were Not Chosen
+(a) The best-looking model (ridge with gaze) is statistically the same as B0, so its importances would be noise. (b) The descriptive B0 analysis is cheap, adds the exposure-slope and stratum calibration checks, and records the reduction explicitly.
+
+### Implementation
+`configs/gate6_descriptive.yaml` committed before the run; `backend/pipeline/gate6/descriptive_b0.py`; outputs `results/gate6_tables.md`, `results/gate6_meta.json`, `results/_tables/gate6_*.csv`. The Gate 3 out-of-fold B0 predictions were reused (not refitted); the final ridge fit uses C = 0.01 chosen by the Gate 2/3 inner rule on all rows.
+
+### Status
+Complete; report is `docs/analysis/GATE6_report.md` (Part 1). Step 3 analyses follow.
+
+### Impact
+None on earlier results. Adds descriptive context only.
+
+### Remarks
+Several strata were examined without multiplicity control; the three intervals that exclude zero (all rows, one attacked kiosk, April) are one signal at three levels and are not findings.
