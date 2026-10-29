@@ -1,0 +1,57 @@
+{
+ "deepfake9.png": {
+  "visual": "Comic-style coupon with text 'ZAP! 20% OFF EV CHARGE', cartoon electric vehicle, barcode, colorful pixel/mosaic graphic",
+  "anomalies": "Stylistic artifacts (rainbow mosaic), possible AI-generated art; unrealistic promotional styling; barcode likely decorative/fake",
+  "n_variants_in_file": 8
+ },
+ "deepfake7.png": {
+  "visual": "Neon/purple ticket reading 'SAVE 30% EV POWER', stylized cars, barcode",
+  "anomalies": "High contrast neon design and synthetic lighting indicate possible AI-generated image; unusually large 30% claim may be unrealistic",
+  "n_variants_in_file": 4
+ },
+ "real4.png": {
+  "visual": "Black/green branded ad with logos 'gojek | CD ENGIE', text '10% off EV charging', green car and charger",
+  "anomalies": "Branding mismatch/odd partner text ('CD ENGIE'); possible unauthorized use of real logos — suspicious branding",
+  "n_variants_in_file": 8
+ },
+ "deepfake6.png": {
+  "visual": "Teal/black coupon '25% CHARGE BOOST', stylized car, barcode, QR-like pattern",
+  "anomalies": "Garbled/odd text and heavy stylization suggest AI-generation; barcode/QR may be decorative, not functional",
+  "n_variants_in_file": 4
+ },
+ "deepfake8.png": {
+  "visual": "Beige ticket-style coupon '10% DISCOUNT EV CODE', two cars, barcode",
+  "anomalies": "Template-style coupon — possible AI-generated asset reused across kiosks; barcode likely decorative",
+  "n_variants_in_file": 8
+ },
+ "deepfake1.png": {
+  "visual": "Blue/white coupon '10% EV DISCOUNT COUPON', car image, barcode, visible label 'EV DEEPFAKE'",
+  "anomalies": "Explicit 'DEEPFAKE' label visible — clear sign of synthetic/generated content or a demonstration asset",
+  "n_variants_in_file": 4
+ },
+ "real7.png": {
+  "visual": "ChargeHub-styled mobile promo 'SAVE 20% OFF YOUR FIRST CHARGE', car image, code 'EVSTART20' and barcode",
+  "anomalies": "Legitimate-looking branding (ChargeHub) but could be cloned; promo and code OK but verify domain and link before trusting",
+  "n_variants_in_file": 4
+ },
+ "real6.png": {
+  "visual": "White promo panel 'Get 10% Discount On Your Order' with code 'BF10' and 'Tap To Copy' button",
+  "anomalies": "Interactive copy prompt and external shopping domain (evchargers.com.au) — phishing risk if link leads outside verified service; prompts to copy code are moderately suspicious",
+  "n_variants_in_file": 4
+ },
+ "real9.png": {
+  "visual": "ChargeHub-styled promo 'SAVE 20% OFF YOUR FIRST CHARGE' with code 'EVSTART20' and barcode",
+  "anomalies": "Duplicate branding — check for legitimate ChargeHub source; duplication could be benign or indicate templated ads",
+  "n_variants_in_file": 4
+ },
+ "deepfake2.png": {
+  "visual": "Tilted coupon-like EV promo card with striped border, multiple 10% labels plus a 16% callout, compact EV car render, charging-station icon, and barcode strip at the bottom",
+  "anomalies": "Layout feels synthetic with repeated discount fragments and uneven typography; mixed 10% and 16% messaging is inconsistent; barcode should be treated as untrusted until validated",
+  "n_variants_in_file": 5
+ },
+ "real8.png": {
+  "visual": "ElectroCharge vertical ad panel featuring a white EV plugged into a glowing charger in a parking garage, headline promises 30% off this month, code CHARGE30, and bottom barcode",
+  "anomalies": "Professional look but high-value offer can be abused in scam reposts; verify official ElectroCharge source and destination URL before using the code",
+  "n_variants_in_file": 4
+ }
+}

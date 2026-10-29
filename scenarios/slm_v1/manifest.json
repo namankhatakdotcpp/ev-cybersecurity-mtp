@@ -1,0 +1,31 @@
+{
+ "seed": 20261029,
+ "n_stations": 240,
+ "strata": {
+  "benign": 40,
+  "all_attacked": 40,
+  "mixed": 160
+ },
+ "visible_class_counts": {
+  "legitimate_discount": 62,
+  "fake_discount": 65,
+  "ambiguous_safe_deepfake": 41,
+  "obvious_attack_deepfake": 152,
+  "ambiguous_attack_real": 74,
+  "benign_plain": 205
+ },
+ "attacked_by_hidden_mode": {
+  "reduced": 226,
+  "blocked": 65
+ },
+ "n_kiosks_available": 599,
+ "malicious_condition_stations": 60,
+ "image_description_parse": {
+  "rows_parsed": 57,
+  "rows_malformed_skipped": 1
+ },
+ "pool_size": 1123,
+ "sessions_used": 106,
+ "inputs_sha256": "382f1cd360f199dbea53adb166bffdce79ed67037a10f86264ea0bea72e03cd4",
+ "truth_sha256": "ad24ee98ada55f329e5f306e6e4efca923c7287d1780759c5262b3c4c302a33d"
+}
