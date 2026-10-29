@@ -3123,3 +3123,106 @@ None on earlier results. Adds descriptive context only.
 
 ### Remarks
 Several strata were examined without multiplicity control; the three intervals that exclude zero (all rows, one attacked kiosk, April) are one signal at three levels and are not findings.
+
+---
+
+## D073
+
+### Date
+2026-10-29
+
+### Decision
+Ran S5 (skip vs charge) framed relative to exposure, exploratory, same 5 x 20 nested participant-grouped CV, same ridge grid and bootstrap as Gates 2-3. Main set: mixed stations as in protocol v1 (667 rows, 118 participants, 175 skips). Extension: all stations with benign and all-attacked indicators (1,057 rows, 280 skips), exploratory and outside the Holm family. Holm family stated and now complete: {S1, S2, S5, S6}.
+
+### Context / Problem
+Gate 0 showed the legacy risky label mixes exposure with the choice to charge. In all-attacked stations a skip is protective; in benign stations it is over-cautious. You asked for S5 framed against exposure.
+
+### Evidence
+Descriptive: skip rate is 29.7% [23.7, 36.5] at benign, 28.2% [25.1, 31.6] at mixed and 25.9% [20.5, 32.2] at all-attacked stations; it barely tracks exposure. Models: B0 (exposure and design only) AUROC 0.50 [0.46, 0.55]; B 0.884 [0.845, 0.917]; B+G 0.889 [0.850, 0.921]; B+G minus B +0.005 [-0.007, +0.017], paired p 0.40. LRT for the six gaze features (B+G vs B): chi-square 18.5 on 6 df, p 0.0050, permutation p 0.015. Extension: B+G minus B +0.002 [-0.006, +0.009]; LRT p 7e-5. Holm at family size 4: S5 0.020, S6 0.082 (descriptive LRT), S1 0.507, S2 0.590.
+Diagnostic (post-hoc, descriptive): window duration alone separates skip from charge with AUROC 0.887 (median 4.9 s for skips, 16.4 s for charges), and gaze fixation count alone with 0.864. The window ends at the decision event, so a skip (leaving) is mechanically short.
+
+### Alternatives Considered
+(a) Treat the LRT result as a finding; (b) drop window duration and gaze counts and refit; (c) report with this caveat and run nothing more.
+
+### Why Alternatives Were Not Chosen
+(a) The B covariates are outcome-adjacent, and the discrimination gain from gaze is +0.005 AUROC; a significant LRT with a negligible gain is not evidence that gaze helps decisions. (b) A second model family on the same rows would be a further unplanned analysis, and the decision to drop covariates would be made after seeing the leakage. Offered, not done.
+
+### Implementation
+`configs/gate6_extra.yaml` and `backend/pipeline/gate6/extra.py` (committed 50b1ce2 before the run); registry run `g6_s5_skip_vs_charge_20261029_153804_940237`; `results/gate6_s5.json`.
+
+### Status
+Complete, exploratory. S5 passes Holm numerically (0.020) but must not be reported as a gaze effect (see Remarks).
+
+### Impact
+Completes the Holm family. S5's apparent signal is the only adjusted p-value below 0.05 in the project and is explained at least in part by a mechanical relation between window length and the outcome.
+
+### Remarks
+Skip vs charge cannot be separated from time-to-decision with the current logs. The next data collection should log the decision latency separately from gaze, and gaze before the decision rather than the whole window.
+
+---
+
+## D074
+
+### Date
+2026-10-29
+
+### Decision
+Post-hoc sensitivity, deviation from protocol v1: repeated the Gate 2/3 ridge comparison (B0, B, B+G) on the T1 primary set with an extended C grid (0.0001, 0.001, 0.01, 0.1, 1, 10, 100). The original-grid results are unchanged and remain the pre-specified ones.
+
+### Context / Problem
+Ridge chose the smallest C (0.01) in 95-99% of folds, so the three models were nearly identical and the narrow CI was partly shrinkage.
+
+### Evidence
+The extended grid again chose its smallest value (0.0001) in 86-95% of folds. AUROC B0 0.636, B 0.635, B+G 0.636. B+G minus B +0.0007 [-0.004, +0.006]; B+G minus B0 +0.0000 [-0.005, +0.005]. Original grid: B+G minus B +0.004 [-0.006, +0.015]. With maximal shrinkage all three models reduce to the exposure offset.
+
+### Alternatives Considered
+Replace the original grid; add an unpenalised CV model.
+
+### Why Alternatives Were Not Chosen
+Replacing the grid would hide the deviation. The unpenalised likelihood-ratio test (p = 0.226) already is the unshrunk comparison.
+
+### Implementation
+Same code path as Gate 3 with a copied configuration; registry run `g6_ridge_grid_sensitivity_20261029_152830_288602`.
+
+### Status
+Complete. The null survives, and in a direction that adds no information beyond B0: the best CV choice is "ignore the covariates".
+
+### Impact
+None on earlier results. Adds a sensitivity statement.
+
+### Remarks
+Selection hitting the grid edge again is a property of data without signal beyond the offset, not an argument for a still wider grid.
+
+---
+
+## D075
+
+### Date
+2026-10-29
+
+### Decision
+Post-hoc, deviation from protocol v1: one EEG variant on the matched set (150 rows, 49 participants, 70 events): each EEG feature detrended linearly on trial index, fitted inside each training fold. Ridge, same 5 x 20 CV. No other EEG variant was run; BG+EEG minus B is not cited.
+
+### Context / Problem
+You asked for trial index to be added as a covariate. It already is a linear covariate in sets B, BG and BGE, so adding it changes nothing. The concern behind the request is that EEG band power drifts across the session, so I implemented that as detrending the EEG block on trial index.
+
+### Evidence
+Gate 4 reproduced exactly (AUROC B 0.610, BG 0.634, BGE 0.666). BGE detrended 0.666 [0.554, 0.754]. Primary contrast BGE detrended minus BG +0.030 [-0.015, +0.070], paired p 0.15; permutation p 0.18 (perm mean 0.651). BGE detrended minus BGE -0.0006 [-0.003, +0.002]. Spearman correlation of EEG features with trial index: 0.27 or below in absolute value (largest at TP10 delta, theta and alpha: 0.23-0.27).
+
+### Alternatives Considered
+Quadratic detrending; detrending on time since session start; within-participant centring.
+
+### Why Alternatives Were Not Chosen
+You asked for no other EEG variants.
+
+### Implementation
+`benchmark.detrend_within_fold` (off unless `detrend_on` is set); registry run `g6_eeg_detrended_20261029_153137_669114`.
+
+### Status
+Complete. The EEG null is unchanged by the adjustment.
+
+### Impact
+None on earlier results.
+
+### Remarks
+The RAG-contaminated-subset result (p = 0.019) is not pursued; it is a limitation and a hypothesis for new data.

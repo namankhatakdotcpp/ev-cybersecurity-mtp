@@ -1,0 +1,29 @@
+{
+ "C": 0.01,
+ "inner_scores": [
+  0.6517582914676437,
+  0.6527010800215504,
+  0.6549158429609293,
+  0.6557702638209393
+ ],
+ "bootstrap_ok": {
+  "ridge": 2000,
+  "glm": 2000
+ },
+ "free_exposure_slope": {
+  "logit_p_exp_slope": 1.1016342638245613,
+  "slope_se": 0.21459320383423802,
+  "lo": 0.6810315843094548,
+  "hi": 1.5222369433396679
+ },
+ "n_rows": 492,
+ "n_participants": 112,
+ "n_events": 220,
+ "oof_source": "g3_grid_ridge_20261029_140332_671787/artifacts/oof_B0.npy",
+ "oof_B0_auroc_mean_over_repeats": 0.627972510026738,
+ "bootstrap": {
+  "resamples": 2000,
+  "seed": 6060,
+  "unit": "participant"
+ }
+}

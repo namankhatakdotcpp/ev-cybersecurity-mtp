@@ -1,0 +1,195 @@
+{
+ "n_rows": 150,
+ "n_participants": 49,
+ "n_events": 70,
+ "auroc": {
+  "B": {
+   "point": 0.6099375,
+   "ci": [
+    0.5158995571326401,
+    0.692472511574074
+   ],
+   "brier": 0.2364663676576558
+  },
+  "BG": {
+   "point": 0.6344821428571428,
+   "ci": [
+    0.5352891141910158,
+    0.7223754792559939
+   ],
+   "brier": 0.23237482299555215
+  },
+  "BGE": {
+   "point": 0.6662857142857144,
+   "ci": [
+    0.5559497507967294,
+    0.7553463478445329
+   ],
+   "brier": 0.22885224520051506
+  },
+  "BGE_detrended": {
+   "point": 0.66575,
+   "ci": [
+    0.554355145316799,
+    0.7544654776631634
+   ],
+   "brier": 0.2291083565062922
+  }
+ },
+ "primary_BGE_detrended_minus_BG": {
+  "auroc": {
+   "mean": 0.030494493743210938,
+   "ci": [
+    -0.014517453591606075,
+    0.06982402138797124
+   ],
+   "se": 0.020948870607874738,
+   "p_boot": 0.154
+  },
+  "brier": {
+   "mean": -0.00320879877685318,
+   "ci": [
+    -0.0133920818436533,
+    0.00836600125314468
+   ],
+   "se": 0.005511184365660303,
+   "p_boot": 0.516
+  }
+ },
+ "descriptive_BGE_detrended_minus_BGE": {
+  "auroc": {
+   "mean": -0.0006241356247005691,
+   "ci": [
+    -0.0033023656760660576,
+    0.0018661090067340028
+   ],
+   "se": 0.001290619530983065,
+   "p_boot": 0.628
+  }
+ },
+ "descriptive_BGE_minus_BG": {
+  "auroc": {
+   "mean": 0.03111862936791151,
+   "ci": [
+    -0.01253061592147327,
+    0.07024319583276531
+   ],
+   "se": 0.02047332077532293,
+   "p_boot": 0.14
+  }
+ },
+ "gate4_reproduction": {
+  "B": {
+   "now": 0.6099375,
+   "gate4": 0.6099375
+  },
+  "BG": {
+   "now": 0.6344821428571428,
+   "gate4": 0.6344821428571428
+  },
+  "BGE": {
+   "now": 0.6662857142857144,
+   "gate4": 0.6662857142857144
+  }
+ },
+ "permutation_BGE_detrended": {
+  "B": 200,
+  "observed": 0.66575,
+  "p": 0.18407960199004975,
+  "perm_auc_mean": 0.6513513839285714,
+  "perm_auc_q95": 0.677875
+ },
+ "trial_index_drift": [
+  {
+   "feature": "eeg_tp9_delta_rel",
+   "spearman_with_trial_index": 0.18464074664962393,
+   "p_descriptive": 0.02370077310158386
+  },
+  {
+   "feature": "eeg_tp9_theta_rel",
+   "spearman_with_trial_index": 0.11477193235252252,
+   "p_descriptive": 0.16195388652117695
+  },
+  {
+   "feature": "eeg_tp9_alpha_rel",
+   "spearman_with_trial_index": 0.1381637159568656,
+   "p_descriptive": 0.0917777526867071
+  },
+  {
+   "feature": "eeg_tp9_beta_rel",
+   "spearman_with_trial_index": 0.12518879606045705,
+   "p_descriptive": 0.12690315659814694
+  },
+  {
+   "feature": "eeg_af7_delta_rel",
+   "spearman_with_trial_index": -0.013702720045336698,
+   "p_descriptive": 0.8678207290853075
+  },
+  {
+   "feature": "eeg_af7_theta_rel",
+   "spearman_with_trial_index": -0.1260592208577945,
+   "p_descriptive": 0.124262232089231
+  },
+  {
+   "feature": "eeg_af7_alpha_rel",
+   "spearman_with_trial_index": -0.04722992739854605,
+   "p_descriptive": 0.5660168138188699
+  },
+  {
+   "feature": "eeg_af7_beta_rel",
+   "spearman_with_trial_index": 0.10290484618034448,
+   "p_descriptive": 0.21016632977209554
+  },
+  {
+   "feature": "eeg_af8_delta_rel",
+   "spearman_with_trial_index": 0.09080749018981203,
+   "p_descriptive": 0.2690983469708753
+  },
+  {
+   "feature": "eeg_af8_theta_rel",
+   "spearman_with_trial_index": -0.0679453424749342,
+   "p_descriptive": 0.40871843455154366
+  },
+  {
+   "feature": "eeg_af8_alpha_rel",
+   "spearman_with_trial_index": -0.06449456590674042,
+   "p_descriptive": 0.4329797558667532
+  },
+  {
+   "feature": "eeg_af8_beta_rel",
+   "spearman_with_trial_index": -0.028476575912535607,
+   "p_descriptive": 0.7294043482187041
+  },
+  {
+   "feature": "eeg_tp10_delta_rel",
+   "spearman_with_trial_index": 0.27142284765888547,
+   "p_descriptive": 0.0007801954343985475
+  },
+  {
+   "feature": "eeg_tp10_theta_rel",
+   "spearman_with_trial_index": 0.26065821737732514,
+   "p_descriptive": 0.0012749038566711543
+  },
+  {
+   "feature": "eeg_tp10_alpha_rel",
+   "spearman_with_trial_index": 0.22824034872274185,
+   "p_descriptive": 0.004967172034055842
+  },
+  {
+   "feature": "eeg_tp10_beta_rel",
+   "spearman_with_trial_index": 0.12032106729215952,
+   "p_descriptive": 0.14247612237403198
+  },
+  {
+   "feature": "eeg_low_motion_fraction",
+   "spearman_with_trial_index": -0.03800983439812029,
+   "p_descriptive": 0.6442275334236098
+  }
+ ],
+ "chosen_C": {
+  "BGE_detrended": {
+   "0.01": 95,
+   "0.1": 5
+  }
+ }
+}
