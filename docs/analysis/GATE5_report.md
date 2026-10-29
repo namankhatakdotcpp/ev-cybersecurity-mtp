@@ -1,8 +1,8 @@
 # Gate 5 report: SLM benchmark (accuracy pass)
 
-Scored per `docs/protocol/GATE5_scoring_spec.md` (committed 07439e5, before any reply was scored). Full tables: `results/master_table_gate5.md` (generated from the registry). Scenario set, prompts and decoding are those approved in D070/D071. **Status: accuracy pass (temperature 0, seed 1) scored. The 5-seed consistency pass at temperature 0.3 is still running; Table 6 of the master table is partial and is not interpreted here.** The malicious-override condition has not been run.
+Scored per `docs/protocol/GATE5_scoring_spec.md` (committed 07439e5, before any reply was scored). Full tables: `results/master_table_gate5.md` (generated from the registry). Scenario set, prompts and decoding are those approved in D070/D071. **Status: accuracy pass (temperature 0, seed 1) scored. The 5-seed consistency pass at temperature 0.3 is still running; Table 6 of the master table is partial and is not interpreted here.** The malicious-override condition has been run (600 replies, produced outside this session) and is not scored here; it needs its own go-ahead and a rule fixed first.
 
-Process note (D071): approval was given in chat and recorded afterwards. `score_slm.py` was written after the pass had started; its parsing rule is the one frozen in `configs/gate5_prompts.yaml` (committed before any model call), and no number was looked at before the spec was committed.
+Process note (D071): approval was given in chat and recorded afterwards. `score_slm.py` was written after the pass had started; its parsing rule is the one frozen in `configs/gate5_prompts.yaml` (committed before any model call), and within this session no number was looked at before the spec was committed, but see Disclosures: the user reports an earlier provisional scoring run whose numbers were seen.
 
 ## 1. What was measured
 
@@ -62,3 +62,11 @@ Pilot compliance 95% to 100% (all above the 90% line). In the scored set mistral
 1. Consistency pass (running); then re-register and regenerate the master table, and add the consistency paragraph to this report.
 2. Decision on whether to commit the registry rows and master table after the consistency re-run (they are currently uncommitted).
 3. The scoring code was committed after the pass; the registry rows made now carry commit 07439e5 (spec only). Re-registration after the code commit fixes this.
+
+## Disclosures (D078, spec Amendment A1)
+
+1. **Forking paths.** A provisional scoring run was made before the scoring spec was committed and its numbers (detection accuracy about 0.50 to 0.59, mistral V2 format breaks, 98 to 100% malicious-override compliance) were seen. The repository holds no output of that run. The spec rules were not changed afterwards; any later change will be listed in Amendment A1.
+2. **Scorer written after replies existed.** The parsing rule is the one committed in `configs/gate5_prompts.yaml` before any model call, but `score_slm.py` was written after the pass started. Parsing is strict: a reply that breaks the rule is a failure, with no re-parsing and no format retries (mistral V2: 66 of 240 detection replies fail and are counted as wrong).
+3. **Latency and VRAM** are from the sequential accuracy pass only (Table 7). The consistency pass uses parallel workers and the malicious pass ran next to another process using about 10 GB, so neither gives clean figures.
+4. **Malicious pass** exists and is unscored.
+5. **Approval.** The scenario set, pilot and accuracy pass were approved in chat; the repository has no timestamp for it (D071).

@@ -3294,3 +3294,37 @@ Commit hashes in the unpushed range change, so the `git_commit` values in the re
 
 ### Remarks
 Pre-existing public content (`feature_table.csv`, older Decision entries, the `aoi_free_pilot.py` session names, a Windows account name in `main.py`) is untouched and remains a separate decision.
+
+---
+
+## D078
+
+### Date
+2026-10-29
+
+### Decision
+Corrected and extended earlier statements about Gate 5 on the user's information, without changing any result: the approval is recorded as "approved in chat; the repository has no timestamp"; the scoring spec gets Amendment A1 (strict parsing, latency source, and three disclosures); the Gate 5 report gets a disclosures section.
+
+### Context / Problem
+D071 said no accuracy number had been looked at before the spec was committed. That was true of this session's own work and is not true of the project: you report that a provisional scoring run was made earlier and its numbers (detection about 0.50 to 0.59, mistral V2 format breaks, 98 to 100% malicious-override compliance) were seen before the spec existed. I also wrote that the malicious condition had not been run; its 600 replies exist (`results/_slm/malicious/`, written 15:17 to 15:21, produced outside this session).
+
+### Evidence
+The repository contains no output of the provisional run. The malicious pass has 120 replies per model for five models and no scoring. The accuracy-pass numbers I later computed (for example mistral V2: 66 of 240 detection replies failing the format) match the figures you quoted, which is consistent with your account.
+
+### Alternatives Considered
+Rerun the accuracy pass; leave the earlier statement; edit D071.
+
+### Why Alternatives Were Not Chosen
+A rerun cannot undo having seen the numbers and would add cost. D071 and the report are append-only records, so the correction is a new entry and a labelled amendment.
+
+### Implementation
+`docs/protocol/GATE5_scoring_spec.md` Amendment A1; `docs/analysis/GATE5_report.md` section "Disclosures".
+
+### Status
+Complete. The malicious pass stays unscored until you give a go-ahead.
+
+### Impact
+Gate 5 results carry a forking-paths caveat: the scoring spec was fixed after a provisional look. The rules in the spec were not altered afterwards.
+
+### Remarks
+Other process facts for the methods chapter: the `protocol-v1` tag was moved to the rewritten commit (file blob unchanged); `HASH_MAP.md` maps old to new hashes. The repository is public (checked against the GitHub API on 2026-10-29), so the already-public content listed in `docs/audit/PUSH_REVIEW.md` section 3 is exposed now.
