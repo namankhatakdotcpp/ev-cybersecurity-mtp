@@ -1,0 +1,38 @@
+# Gate 4 configuration (Protocol v1 sections 4, 6, 7; secondary hypothesis S6, exploratory). Committed BEFORE the first
+# Gate 4 run. Details the frozen protocol left open are filled here and logged as D069.
+inherits: [configs/gate2_h1.yaml, configs/gate3_grid.yaml]
+
+matched_set:
+  definition: "primary T1 rows (charge, informative station, gaze features) that also have usable EEG features (eeg_missing == False)"
+  expected: {rows: 150, participants: 49, events: 70}     # counts established before this gate (Gate 1); the run must reproduce them
+  eeg_features: [eeg_tp9_delta_rel, eeg_tp9_theta_rel, eeg_tp9_alpha_rel, eeg_tp9_beta_rel,
+                 eeg_af7_delta_rel, eeg_af7_theta_rel, eeg_af7_alpha_rel, eeg_af7_beta_rel,
+                 eeg_af8_delta_rel, eeg_af8_theta_rel, eeg_af8_alpha_rel, eeg_af8_beta_rel,
+                 eeg_tp10_delta_rel, eeg_tp10_theta_rel, eeg_tp10_alpha_rel, eeg_tp10_beta_rel,
+                 eeg_low_motion_fraction]
+  transform: z-score (fitted on the training fold in CV; global and outcome-free in the LRT)
+
+sets:                                  # exposure and design covariates are always included
+  B0:  {extra: []}
+  B:   {extra: [log_window_duration_s, ai_help_used, trial_index]}
+  BG:  {extra: [log_window_duration_s, ai_help_used, trial_index, gaze_n_fixations, gaze_n_clusters, gaze_n_transitions, gaze_transitions_per_fixation, gaze_dispersion, gaze_entropy_bits]}
+  BGE: {extra: [log_window_duration_s, ai_help_used, trial_index, gaze_n_fixations, gaze_n_clusters, gaze_n_transitions, gaze_transitions_per_fixation, gaze_dispersion, gaze_entropy_bits,
+                eeg_tp9_delta_rel, eeg_tp9_theta_rel, eeg_tp9_alpha_rel, eeg_tp9_beta_rel, eeg_af7_delta_rel, eeg_af7_theta_rel, eeg_af7_alpha_rel, eeg_af7_beta_rel,
+                eeg_af8_delta_rel, eeg_af8_theta_rel, eeg_af8_alpha_rel, eeg_af8_beta_rel, eeg_tp10_delta_rel, eeg_tp10_theta_rel, eeg_tp10_alpha_rel, eeg_tp10_beta_rel,
+                eeg_low_motion_fraction]}
+
+s6:
+  primary_contrast: [BGE, BG]          # does the EEG block add to behaviour + gaze on identical rows and participants?
+  other_contrasts: [[BG, B], [BGE, B], [BGE, B0], [BG, B0], [B, B0]]
+  learners: {primary: ridge, exploratory: [rf, hgb]}   # trees are exploratory only (150 rows)
+  lrt: {df: 17, status: descriptive_only, reason: "17 df on 70 events (about 4 events per parameter): the unpenalised test is unreliable; the ridge CV contrast is the primary S6 statistic"}
+  permutation: {B: 200, strata: [incident_mode, period, n_rows], seed: 7172, unit: participant_blocks_of_the_eeg_block}
+  holm_family: [S1, S2, S5, S6]        # provisional upper bounds while S5 is pending; S6 enters with its LRT p-value
+
+selection_bias:
+  compare: [matched participants, other primary participants without usable EEG rows]
+  row_level: [trial_index, window_duration_s, n_attacked, p_exp, n_available, ai_help_used, y]
+  participant_level: [n_rows, event_rate, period, incident_mode, gaze_valid_rate_in_windows, demographics]
+  demographics: [age, gender, education, specialization, ev_experience, driving_years, driving_frequency, terrain_experience]
+  statistics: standardised_mean_difference, mann_whitney_or_chi_square, benjamini_hochberg_across_all
+  coverage_analysis: "reasons why overlap-confirmed participants' rows lack EEG (window before/after the EEG span, partly outside, inside but unusable)"
