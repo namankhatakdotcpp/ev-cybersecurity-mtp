@@ -1,0 +1,59 @@
+# Gate 2 configuration for Protocol v1, hypothesis H1 (B + exposure vs B + G + exposure).
+# Written and committed BEFORE the first run; seeds below are final. Paths are relative to the repository root
+# and can be overridden with the environment variables named in `env_overrides`.
+protocol:
+  version: v1
+  tag: protocol-v1
+  commit: 58e59c0e5fd2dc1cdd647336363984f349457ec7
+  file_blob: 552107deaaad9b413aef8d125bf62bac3b7c199d
+
+paths:
+  raw_data_dir: backend/raw_data
+  feature_table: backend/pipeline/feature_table.csv
+  results_dir: results
+  env_overrides:
+    raw_data_dir: EV_RAW_DATA_DIR
+    feature_table: EV_FEATURE_TABLE
+    results_dir: EV_RESULTS_DIR
+
+target:
+  name: T1_chosen_kiosk_attacked_given_charge_at_informative_station
+  label_version: T1-v1
+  informative: "n_attacked_available >= 1 and n_attacked_available <= n_available - 1"
+  decision: charge
+
+features:
+  exposure: [n_available]                 # plus offset logit(p_exp), p_exp = n_attacked_available / n_available
+  design: [incident_mode, period_jun, period_jul_aug]   # reference period = April 2026
+  behaviour: [log_window_duration_s, ai_help_used, trial_index]
+  gaze: [gaze_n_fixations, gaze_n_clusters, gaze_n_transitions, gaze_transitions_per_fixation, gaze_dispersion, gaze_entropy_bits]
+  log1p_counts: [gaze_n_fixations, gaze_n_clusters, gaze_n_transitions]
+  periods: {apr: ["20260401", "20260430"], jun: ["20260601", "20260630"], jul_aug: ["20260701", "20260831"]}
+
+claim_a:
+  n_nodes: 21                 # Gauss-Hermite nodes (protocol minimum 15); 41 is run as a robustness check
+  alpha: 0.05
+  gaze_df: 6
+
+claim_b:
+  learner: ridge_logistic_with_offset
+  C_grid: [0.01, 0.1, 1.0, 10.0]
+  inner_selection: log_loss
+  outer_folds: 5
+  outer_repeats: 20
+  inner_folds: 3
+  repeat_seeds: [1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120]
+  inner_seed_offset: 5000
+  strata: participant_event_rate_tertile
+  bootstrap_resamples: 2000
+  bootstrap_seed: 4242
+  permutation_lrt: 1000
+  permutation_cv: 200
+  permutation_seed: 7070
+  permutation_strata: [incident_mode, period, n_rows]
+
+sensitivity:
+  drop_duplicate_folder_participants: true     # E2
+  drop_rag_contaminated_sessions: true         # S3
+  min_valid_gaze_samples: 200                  # S4 (1 s at 199.5 Hz)
+  within_between: true                         # participant means of the gaze block added
