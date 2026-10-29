@@ -10,7 +10,7 @@ Legend: **Done** = finished and committed. **Done, negative** = finished; the re
 |---|---|---|---|
 | Project/codebase understanding | Done / strong | Done | D004 to D018; `docs/audit/GATE0_audit.md` (`de3c4d5`, D064) |
 | Behaviour + gaze dataset audit | Mostly done | Done | Gate 0 audit (`de3c4d5`); D034 |
-| EEG decoding/investigation | Substantial progress | Done for decoding; cohort rule not re-derived since D034 | D013, D014 (decoder fix, 76/76), D019 (inclusion rule), D034; funnel in `EEG_COHORT_FUNNEL.md` |
+| EEG decoding/investigation | Substantial progress | Done for decoding; cohort funnel now documented (67 screened, 49 matched) | D013, D014 (decoder fix, 76/76), D019 (inclusion rule), D034; funnel in `EEG_COHORT_FUNNEL.md` |
 | Literature review | Mostly done | Not in the repo; not re-checked here | none in repo (`Research_Gap_Novelty_Documentation.docx` at the top level) |
 | Research gap / novelty | Done | Not in the repo as text; not re-checked here | same |
 | Research question / analysis design | Designed | Done and frozen | Protocol v1 `85ad69e`, frozen `58e59c0` (D065, D066); tag `protocol-v1` |
@@ -63,7 +63,7 @@ Legend: **Done** = finished and committed. **Done, negative** = finished; the re
 ## D. Statements in the old report that are now wrong or need a caveat
 
 - "Actual scientific analysis 20 to 30%", "ML prediction experiments 10 to 20%", "AI/SLM evaluation 10 to 20%": superseded. The analyses in the protocol have been run.
-- "Primary metric AUROC, PR-AUC depending on class distribution": the protocol fixed AUROC with calibration and operating-point metrics; check `PROTOCOL_v1.md` before quoting.
+- "Primary metric AUROC, PR-AUC depending on class distribution": the protocol fixes AUROC as primary and lists PR-AUC, balanced accuracy, Brier score and calibration as secondary (`PROTOCOL_v1.md`).
 - "We have verified that behaviour and gaze are the strongest existing dataset": the results do not show that gaze adds predictive value on the redefined target.
 - "Eye tracking is the stronger primary physiological modality": not supported by the results (H1 not supported).
 - The reproducibility claim in section 11, step 11 is only partly met: 31 lines in 13 files still hold machine-specific paths (`HARDCODED_PATHS.md`).
@@ -71,5 +71,5 @@ Legend: **Done** = finished and committed. **Done, negative** = finished; the re
 ## E. Critical review
 
 - **What changed:** one new document; the old report and everything else untouched.
-- **What could still be wrong:** the literature review and novelty rows are marked "not re-checked" because their content is not in the repo; "leakage audit: done" rests on the Gate 0 audit and the protocol, not on a per-feature timing table I verified here; the PR-AUC remark above is flagged rather than checked.
+- **What could still be wrong:** the literature review and novelty rows are marked "not re-checked" because their content is not in the repo; "leakage audit: done" rests on the Gate 0 audit and the protocol, not on a per-feature timing table I verified here.
 - **Not done:** the FPS measurement, the manuscript, the EEG cohort question (next step), the supervisor decision on the participant-code and session-folder linkage.
