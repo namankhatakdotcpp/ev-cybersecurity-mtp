@@ -121,10 +121,12 @@ def s3_ml(c):
     best = max(cand, key=lambda x: x["auroc"])
     tied = [x for x in cand if x["ci"][1] >= best["ci"][0] and x["ci"][0] <= best["ci"][1]]
     simple = min(tied, key=lambda x: (SIMPLE_SET[x["set"]], SIMPLE_LEARNER[x["learner"]]))
-    pr = []
+    pr, neg = [], []
     for k, name in LEARNERS:
         for key, lab in (("B_minus_B0", "B - B0"), ("G_minus_B0", "G - B0"), ("BG_minus_B0", "BG - B0")):
             x = g3[k]["paired"][key]["auroc"]
+            if x["ci"][1] < 0:
+                neg.append(f"{name}, {lab}")
             pr.append([name, lab, f"{x['mean']:+.3f} [{x['ci'][0]:+.3f}, {x['ci'][1]:+.3f}]"])
     md = ["## 3. Machine-learning benchmark", "",
           "Three learners (ridge with the exposure offset, random forest, gradient boosting) were compared on four feature sets with the same participant-grouped nested cross-validation: "
@@ -141,8 +143,9 @@ def s3_ml(c):
           f"- Early window only, the first {s2['early_window_s']:.0f} s of the decision window (S2): LRT p = {s2['lrt']['p']:.3f}, AUROC difference {s2['delta_auroc_BGE_minus_BE']['mean']:+.3f} "
           f"[{s2['delta_auroc_BGE_minus_BE']['ci'][0]:+.3f}, {s2['delta_auroc_BGE_minus_BE']['ci'][1]:+.3f}].",
           f"- Does any pre-specified model beat B0 with an interval above zero? {'Yes' if s8['any_prespecified_model_beats_B0_with_ci_above_zero'] else 'No'}.", "",
-          "The random forest with behaviour or gaze features is associated with a lower AUROC than B0 in this sample, which is what over-fitting to noise features would look like; "
-          "it is not evidence that the features are harmful. The error rates at the recall-0.80 point show that every model pays for its recall with a high false-warning rate, "
+          (f"Contrasts with an interval entirely below zero: {', '.join(neg)}; in these cases the extra features are associated with a lower AUROC than B0 in this sample, "
+           "which is what fitting noise features would look like, not evidence that the features are harmful. " if neg else "No contrast to B0 has an interval entirely below zero. ")
+          + "The error rates at the recall-0.80 point show that every model pays for its recall with a high false-warning rate, "
           "and no operating point was validated on separate data.", ""]
     return md
 

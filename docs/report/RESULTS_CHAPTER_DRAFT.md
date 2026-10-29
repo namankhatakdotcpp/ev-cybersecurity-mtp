@@ -88,7 +88,7 @@ Paired AUROC differences to the exposure-only set B0 (participant bootstrap):
 - Early window only, the first 5 s of the decision window (S2): LRT p = 0.590, AUROC difference -0.002 [-0.011, +0.007].
 - Does any pre-specified model beat B0 with an interval above zero? No.
 
-The random forest with behaviour or gaze features is associated with a lower AUROC than B0 in this sample, which is what over-fitting to noise features would look like; it is not evidence that the features are harmful. The error rates at the recall-0.80 point show that every model pays for its recall with a high false-warning rate, and no operating point was validated on separate data.
+Contrasts with an interval entirely below zero: Random forest, B - B0, Random forest, BG - B0; in these cases the extra features are associated with a lower AUROC than B0 in this sample, which is what fitting noise features would look like, not evidence that the features are harmful. The error rates at the recall-0.80 point show that every model pays for its recall with a high false-warning rate, and no operating point was validated on separate data.
 
 
 ## Citation placeholders
