@@ -2915,3 +2915,38 @@ Reinforces D064/D067: no evidence that behaviour or gaze improves prediction of 
 
 ### Remarks
 The master tables are the reference for numbers; the report quotes headline figures only. The unadjusted tree-model deficits (S8) are exploratory and grid-limited. The grid-boundary selections suggest the problem lacks signal beyond the offset, not that wider grids would fail; that was not tested.
+
+
+---
+
+## D069
+
+### Date
+2026-10-29
+
+### Decision
+Ran Gate 4: the selection-bias report and S6 (EEG, exploratory) on the matched EEG set. **No EEG claim is supported.** On identical rows (150 rows, 49 participants, 70 events) EEG added to behaviour + gaze changes ridge AUROC by +0.031 [-0.013, +0.070] (participant-block permutation p = 0.22; descriptive 17-df LRT p = 0.027, provisional Holm upper bound 0.11). The EEG rows are a biased subset: 41.1% of the decision windows of participants with synchronised recordings fall after the EEG recording ended, so EEG comes from earlier stations (median trial 3 vs 8; SMD -0.53 [-0.83, -0.29]) and the April-heavy period (49% vs 22%, FDR 0.012); outcome rate, exposure, window duration, gaze quality and demographics show no detected difference. Report: `docs/analysis/GATE4_report.md`; tables `results/master_table_gate4.md` and `results/selection_bias_gate4.md`.
+
+### Context / Problem
+You approved Gate 4 for B, B+G and B+G+EEG on the identical matched set plus the selection-bias report. The frozen protocol did not specify the S6 test statistic, the permutation strata for the EEG block, or the handling of the 17-column block at 70 events.
+
+### Evidence
+Matched set reproduced the pre-specified counts (150 / 49 / 70, no missing EEG values). Registry runs `g4_selection_bias`, `g4_s6_ridge/rf/hgb` (code 13b06c7). Primary contrast and permutation as above; operating-point false-warning rates at recall 0.80 are 0.61-0.64 for every set. Random forest and boosting fall to chance on the matched set (AUROC 0.49-0.55 for B, BG, BGE, vs 0.60-0.62 for B0). Post-hoc diagnostic (not pre-specified): 17 pure-noise columns raise ridge CV AUROC by +0.006 on average (SD 0.014). Canonical session and EEG session link agree for all participants.
+
+### Alternatives Considered
+(a) Treat the 17-df LRT as the primary S6 test; (b) reduce the EEG block to a few features chosen after inspecting the data; (c) run S6 on all rows with imputed EEG; (d) weight the matched set to resemble the full set.
+
+### Why Alternatives Were Not Chosen
+(a) 17 parameters on 70 events is unreliable; the CV contrast with a permutation test is primary and the LRT is labelled descriptive. (b) and (c) would be forks or would invent data; imputing EEG for rows that lack the recording is not defensible. (d) would add modelling choices on an already underpowered set.
+
+### Implementation
+`configs/gate4_eeg.yaml` (committed first), `backend/pipeline/gate2/{matched,selection_bias,run_gate4,master_table}.py`, tests, `backend/pipeline/gate2/diagnostics/g4_noise_columns.py` (post-hoc diagnostic), registry rows and run summaries, generated tables, `docs/analysis/GATE4_report.md`.
+
+### Status
+Gate 4 complete; awaiting approval for Gate 5 (SLM benchmark: the labelled scenario set is built and shown to you first, then the identical-condition benchmark). The Holm upper bounds remain provisional (S5 pending). The EEG results are exploratory and descriptive.
+
+### Impact
+Reinforces D064-D068: no modality (behaviour, gaze, EEG) shows a detectable improvement over layout exposure for the choice of an attacked kiosk. Refines D019/D050's EEG story: the usable EEG subset reflects early-session windows and the earlier collection period. Does not edit earlier entries.
+
+### Remarks
+Further EEG analysis on these participants would be a data-driven fork; a clean EEG test needs a new collection with whole-session recording and trial position controlled. The limited power (differences below about 0.06 AUROC are indistinguishable from zero) is a property of the subset, not evidence that a larger effect would be absent.
