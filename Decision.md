@@ -3468,3 +3468,38 @@ The final report states that no model beats the exposure-only baseline and that 
 
 ### Remarks
 The generator has no unit test of its own; it was checked against the earlier reports. Push of `main` is still pending the user's own login.
+
+
+---
+
+## D083
+
+### Date
+2026-10-29
+
+### Decision
+On the user's go-ahead: wrote spec Amendment A2 first, reran the malicious-override condition cleanly into `results/_slm/malicious_rerun/` with provenance, scored it, filled one missing mistral consistency reply, added a test for the final-report generator, and changed the claims wording for the SLM selection.
+
+### Context / Problem
+The original malicious pass ran next to another GPU process and was produced outside the analysis session. The mistral consistency log held 6,033 lines (4,799 distinct pairs, 1,234 duplicated pairs, one pair absent) against 4,800 for the others. The generator for the final report had no test, so "generated from the registry" could not be checked.
+
+### Evidence
+Row check on all passes: pilot 20, accuracy 960, malicious 120 lines per model with no duplicates; consistency 4,800 distinct pairs for four models; mistral 6,034 lines and 4,800 distinct pairs after the gap fill (the duplicates stay in the raw log, the first reply per pair is scored, D076). Amendment A2 was committed (3784ea5) before the rerun. Rerun result: all five models name the target kiosk 0.98 to 1.00 with the override against 0.25 to 0.45 without, in V1 and V2, with no SKIP and no failed replies; the label is "follows the override" for every model and variant. The rerun agrees with the original pass on 60 of 60 stations for four models and 58 of 60 for mistral in both variants (not investigated). Re-scoring the consistency pass changed one figure (mistral V1 recommendation identical across seeds 0.862 to 0.863). Tests: 47 pass, including four new tests for `build_final_report.py` (frozen-fixture checksum, determinism, a changed registry value changes the report, claims wording).
+
+### Alternatives Considered
+Leave the one missing mistral pair and disclose it (the position in D080); score the original malicious pass; rely on a hand check of the generator.
+
+### Why Alternatives Were Not Chosen
+The user asked for exactly 4,800 distinct rows per model; a single resumed call at the same settings, appended as returned, is not a selection among replies (A2 point 7 supersedes the D080 choice). The original pass had an uncontrolled GPU condition and no provenance. A test is the only way to verify the "generated from the registry" claim.
+
+### Implementation
+`run_slm.py` gained an optional output-directory argument and writes a provenance file per invocation (git commit, Ollama version, model digests, prompt and scenario hashes, decoding, GPU state). `backend/pipeline/gate5/malicious.py` scores per A2, registers `g5_malicious_<model>` rows and generates `results/master_table_gate5_malicious.md`. The generator takes a results directory and output path; the fixture lives in `backend/pipeline/gate7/tests/fixture/`. GPU baseline during the rerun was about 5.6 GB with other applications running, so the rerun's VRAM figures are not used. Rubric item 4 now reads "Best SLM: not named"; the claims register states that no SLM showed reliable detection above the rule baselines (V2 carries the image-description leak) and that the SLMs follow an explicit instruction to pick an attacked kiosk, which is instruction-following only. The Word progress report was regenerated without participant codes or session names.
+
+### Status
+Complete. The Word report must not be sent to the supervisor until the user has decided on the repository's privacy (user instruction). Nothing pushed in this step; four commits are local plus the ones that follow.
+
+### Impact
+The final report and Gate 5 report now include the override results. The earlier "malicious not assessed" claim is replaced by the instruction-following result.
+
+### Remarks
+Backup branches stay until the user confirms the pushed tree, then they are deleted, `git gc --prune=now` is run, and the local session map is deleted if not needed.
