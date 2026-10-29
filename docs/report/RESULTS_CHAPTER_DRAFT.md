@@ -256,6 +256,20 @@ Everything below is recorded in `Decision.md`; none of it changes a registered r
 - **History rewrite and tag move** (D077): unpushed commits were rewritten to remove participant-linked content before publication, so hashes recorded in the registry are the pre-rewrite ones (`docs/audit/HASH_MAP.md` maps them). The `protocol-v1` tag was moved to the rewritten protocol commit; the protocol file itself is byte-identical.
 - **Local backups removed after the push** (D084).
 
+## 9. Critical review of this chapter
+
+Statements ranked from weakest to strongest, with the reason:
+
+1. **The EEG paragraph.** The contrast that excludes zero is exploratory and the subset is selected; the paragraph only supports "not established".
+2. **The sensitivity subset without contaminated assistant memory** has a small p-value that is one of several uncorrected analyses; it is reported as a hypothesis, and the reasons for the difference are not known.
+3. **The audit section.** The audit figures were computed from the raw logs in Gate 0 and are parsed from the audit report, not from a registered run; they depend on that report being right.
+4. **The statement that skipping is not associated with exposure** rests on overlapping intervals at moderate counts; it is a description of a flat pattern, not a test.
+5. **The language-model conclusions.** The scenario set is small, quota-sampled and text-only; the image descriptions leak the image type; a provisional scoring look preceded the spec. The negative finding (no reliable detection above the rules) is the safer reading; any positive reading of V2 is not supported.
+6. **Sentences in this generator that are static text, not computed** (for example that most attacked kiosks are called SAFE without a description, and that stability across seeds does not make a detector accurate) were checked against the fixture and the real registry when written, but would not update if the registry changed.
+7. **The ML benchmark and H1** are the most solid statements, but they apply only to this sample and to the redefined target.
+
+Not covered: the video-based gaze pilot (closed), the in-game assistant (not tested), FPS (not measured), and any causal question.
+
 
 ## Citation placeholders
 
