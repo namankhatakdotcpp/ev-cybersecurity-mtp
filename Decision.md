@@ -3054,3 +3054,38 @@ None on earlier results. SLM results will be reported in a separate track and ne
 
 ### Remarks
 The single failure in mistral's and phi3's pilot replies is a missing kiosk key (an available kiosk left out of the JSON), counted as a failure under the approved parsing rule rather than repaired.
+
+
+---
+
+## D072
+
+### Date
+2026-10-29
+
+### Decision
+Completed the accuracy pass (temperature 0, seed 1: 960 calls per model) and the malicious-condition pass (120 calls per model) for all five models, and **started the full consistency pass** (temperature 0.3, seeds 1-5, all 960 items per model, 4,800 calls per model, 3 parallel workers). No subset is used: the sequential throughput measured in the accuracy pass (0.23-0.44 s per call) made the full pass practical, so the contingency in D071 (a subset chosen by scenario id) was not needed. Consistency timings are not reported (parallel workers); latency and GPU memory come from the sequential accuracy pass.
+
+### Context / Problem
+D071 recorded the approval and the pilot. The accuracy pass ran sequentially per model with GPU memory sampled every 0.5 s; the malicious pass followed; the consistency pass runs in the background.
+
+### Evidence
+Accuracy-pass runtime: mistral 223 s, llama3.1 248 s, phi3 322 s, gemma2 421 s, qwen2.5 263 s. GPU memory added by loading a model (accuracy pass, baseline about 5.2 GB used by desktop applications): mistral 5.3 GB, llama3.1 5.5, phi3 4.3, gemma2 7.1, qwen2.5 5.2. In the malicious pass the baseline memory in use was about 10 GB (another process held GPU memory), so those VRAM figures are not used. A preliminary, unscored-in-the-report look at the stored replies (the pre-specified scoring code run once to test it, while the consistency pass was running) showed: detection accuracy 0.50-0.59 for every model and variant, below the deepfake-image-type reference rule (0.73); V1 false-safe rates of 0.65-0.99 and V2 false-warning rates of 0.35-0.73; mistral V2 had 66 of 240 detection replies failing the format rules; recommendation safe-choice 0.37-0.65 (random choice 0.51); every model followed the malicious override in 98-100% of replies against 25-45% target choice without it. These numbers are provisional until the final scoring step and no design choice was changed because of them.
+
+### Alternatives Considered
+(a) Run the consistency pass on a subset; (b) pause until scoring; (c) change the prompt or parsing after seeing the failures.
+
+### Why Alternatives Were Not Chosen
+(a) Not needed given measured throughput. (b) The scoring code is deterministic and pre-specified; waiting would not change what is scored. (c) Prompts, parsing and scoring are frozen by the approval in D070/D071; failed replies are counted, not repaired.
+
+### Implementation
+`backend/pipeline/gate5/run_slm.py` (committed); `score_slm.py` and `master_table5.py` (registration and the master table) written and pending the final scoring step; raw replies under `results/_slm/` (gitignored).
+
+### Status
+Accuracy and malicious passes complete; consistency pass running; final scoring, registry rows, master table, Gate 5 report and the closing decision entry pending.
+
+### Impact
+None on ML results. The SLM track stays separate and is never ranked against the ML models.
+
+### Remarks
+The malicious-condition numbers show that a single instruction line makes all five models recommend an attacked kiosk, which is a property of the instruction-following behaviour tested here, not evidence about human responses to a manipulated assistant.
