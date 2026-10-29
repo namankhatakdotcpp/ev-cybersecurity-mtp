@@ -2638,3 +2638,53 @@ Reinforces D030/D060: a fixed 2D mapping from `gaze_projected_*` to video pixels
 
 ### Remarks
 Before any larger extraction, the open question is what `gaze_projected_*` is relative to: the constant 0.475 left/right offset (D060) suggests each eye is expressed in its own viewport convention, and the video shows one mono view. Using `gaze_forward`/`gaze_origin` with the render camera's pose (needs head pose, D031) is the principled alternative and is not testable from these files alone. Ask the mentor or check Varjo's documentation for the definition of `gaze_projected_to_*_view`.
+
+
+---
+
+## D062
+
+### Date
+2026-10-29
+
+### Decision
+Ran the one bounded test of a different gaze-to-pixel route that D060/D061 had not tried: `gaze_forward` (head-local) through a pinhole model, `u = cx + sx*f*gx/gz`, `v = cy + sy*f*gy/gz`, on the reasoning that the mp4 is rendered from the headset's own viewpoint so head pose is not needed to land in frame pixels. Calibrated on participant 021 only, tested on 041 and 100 without refitting. **Verdict: NOT VALIDATED - the pre-agreed bar (beat the time-shifted controls on held-out participants) was not met.** Under that rule the video-based AOI route is closed for the existing data, with the caveat below that the test was starved of calibration clicks.
+
+### Context / Problem
+D060 said the principled alternative to `gaze_projected_*` needed head pose (D031). That was an inference, and it was too strong: a view-relative gaze direction needs only camera intrinsics to reach frame pixels, since the frame already carries head pose. D060/D061 only tested `gaze_projected_*`.
+
+### Evidence
+**Calibration data was thin by construction.** Click events recoverable from the interaction log inside the video windows: 8 in total (021: 2, `assistant_chat` and `charging`; 041: 5 `charging`; 100: 1 `charging`). Set Amount and Confirm clicks are not logged. The target for each click is the pointer tip in the frame at click minus 0.2 s (24 new frames, 3 per click; this task's total of new frames is 24, under the 60 cap); gaze is the mean of `gaze_forward` ratios gx/gz, gy/gz over the 300 ms before the click (status==2, stability>0). Assumption: the participant looks at what they click, shortly before clicking. Two clicks give 4 equations for 3 parameters, so the 021 fit is barely determined, not a real calibration. Pointer-tip stability across the three frames is good for most clicks (2-37 px) but 100's single click has a 700 px spread (the detector probably latched onto a different object), and 041's last click has no valid gaze.
+
+**Fit.** Only one sign variant gives a positive focal length with a small residual: sx=+1, sy=-1 (the plain pinhole form), cx=1000, cy=745, f=1449 px, 12 px residual on 021's two clicks. As an inference only: f=1449 px on a 2048 px wide frame corresponds to about 70 degrees horizontal field of view, and the principal point sits near the frame centre (1024, 768), both plausible for a headset render. The three other sign variants fit worse or return a negative focal length. Two points and three parameters mean this agreement could be chance.
+
+**Held-out click error.** 041 (4 clicks): median 213 px, the same as a constant guess at 021's median click position (213 px). 100 (1 click): 158 px against 248 px. The pointer-calibrated secondary fit (54 window frames from 021, assuming gaze tracks the pointer) reaches 157 px train error and 202-209 px held-out, against constant guesses of 345 and 282 px; mapping error is of the order of half a card width (cards are about 309 px wide in these frames), so card hits are sensitive to it.
+
+**AOI hit rate on the true card (share of in-card gaze samples; true | shifted +30 s | -30 s | +60 s | constant guess), click-fit, sx=+1 sy=-1:**
+- 021 (K1, calibration participant, not held out): 0.49 | 0.01 | 0.00 | 0.37 | 0.00. Under the other three sign variants it is 0.00. Not a majority on Kiosk 1 (0.49 is below half), but the first time any variant puts roughly half of in-card gaze there, and it beats the 30 s controls; the +60 s control reaches 0.37.
+- 041 (K2, held out): 0.61 | 0.64 | 0.15 | 0.90 | constant guess 0.81. Does not beat its controls or the constant guess.
+- 100 (K1, held out, 8 usable frames): 0.74 | 0.00 | 0.17 | 0.17 | constant guess 0.00. Beats its controls, but on 8 frames and with the unreliable click above.
+The pointer-calibrated variant scores 0.00-0.11 everywhere.
+
+**Localisation versus mapping.** Card boxes come from D061's button-anchored detection; 021's boxes were too tall and offset, which, if anything, flatters 021's hit rate. The held-out pixel errors (158-213 px) are about half a card width, so mapping error alone is large enough to move gaze across card borders; localisation error is an additional unquantified term, so how a miss splits between the two cannot be stated from this data.
+
+### Reason
+The camera-model route was the only untested mapping that did not need new data, and it was worth one bounded attempt before closing the question.
+
+### Alternatives Considered
+(a) Declare 021's 0.49 and 100's 0.74 a success. (b) Calibrate on all three sessions' clicks to get more points. (c) Keep tuning (distortion, depth) until a variant works.
+
+### Why Alternatives Were Not Chosen
+(a) 021 is the calibration participant, 100 rests on one click and 8 frames, and 041, the best-sampled held-out session, does not beat its controls. (b) would remove the held-out test, the only thing that distinguishes a mapping from a fit. (c) is the open-ended tuning the time-box exists to stop.
+
+### Implementation
+`backend/pipeline/video_pilot/q1_click_events.py` and `q2_pinhole_gaze_forward.py`; click frames and pair tables in `D:\MTP_scratch\video_pilot` (not committed).
+
+### Status
+Verified (the click-event inventory, the fit, held-out errors, and hit rates with controls). Not validated: the pinhole mapping. Under the agreed rule (must beat shifted controls on held-out participants) the bar was not met (1 of 2 held-out sessions, and that one on 8 frames).
+
+### Impact
+D026/D030: the plausible-looking pinhole parameters and the 021 result (0.49 on Kiosk 1, vs 0.00 under every `gaze_projected_*` convention in D061) mean the earlier failure is probably in the use of `gaze_projected_*`, not in the gaze data itself; this is suggestive, not shown. D060: its statement that head pose is required is corrected here - not required for frame-pixel landing, still required for world coordinates. D061: unchanged. **The video-based AOI route is closed for the existing data under the agreed rule**, with this caveat: the logged data contain too few click events (2 for the calibration participant) to calibrate a three-parameter camera model, so a larger, better-posed calibration could in principle do better; no further calibration source exists in these sessions. The AOI-free fallback stays the plan, and RQ1 remains a new-data deliverable (D025/D031).
+
+### Remarks
+For new collection (Objective 3), a short calibration step at the start of each session (looking at, and clicking, known on-screen targets) would give a camera model the data it needs; this would be cheap with the video capture already running. The 021 result is worth recording as a lead, not a finding.
