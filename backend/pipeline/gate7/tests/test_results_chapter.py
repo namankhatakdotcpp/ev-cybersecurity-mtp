@@ -13,7 +13,7 @@ FIXTURE = FX / "results"
 AUDIT = FX / "GATE0_audit_excerpt.md"
 # SHA-256 of the chapter generated from the frozen fixture. If the generator's wording or layout is changed on purpose, regenerate the
 # fixture output, check the diff by eye, and update this value in the same commit as the change.
-EXPECTED_SHA256 = "b5d32f68ea40967d01719eb799c78d3bb14b451b17c50b35966b082f99cc502f"
+EXPECTED_SHA256 = "97136b0cd7b316840ae6e3e05dab4cc9146f2f62ce403086fe74ede4adeef4f8"
 
 CAUSAL = re.compile(r"\b(caus(e|es|ed|ing|al)|leads? to|led to|results? in|due to|because of|drives?|driven by|effect of)\b", re.I)
 

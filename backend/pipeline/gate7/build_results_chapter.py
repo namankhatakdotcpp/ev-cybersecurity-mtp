@@ -74,7 +74,37 @@ def s1_audit(c):
     return md
 
 
-SECTIONS = [s1_audit]
+def s2_h1(c):
+    """Primary hypothesis H1 (Gate 2)."""
+    a, b = c.get("h1_claim_a"), c.get("h1_claim_b")
+    pa = a["primary"]
+    d = b["delta_auroc"]["BG_minus_B"]
+    m = b["metrics"]
+    sens = a["sensitivity"]
+    rows = [["Primary set", pa["n_rows"], pa["n_participants"], pa["n_events"], f"{pa['lrt']['stat']:.2f}", f"{pa['lrt']['p']:.3f}"]]
+    for key, lab in (("E2_drop_duplicate_folder_participants", "Participants with more than one session folder removed (E2)"),
+                     ("S4_at_least_200_valid_gaze_samples", "At least 200 valid gaze samples in the window (S4)"),
+                     ("S3_drop_rag_contaminated_sessions", "Sessions with a contaminated assistant memory removed (S3)")):
+        x = sens[key]
+        rows.append([lab, x["n_rows"], x["n_participants"], x["n_events"], f"{x['lrt_stat']:.2f}", f"{x['p']:.3f}"])
+    md = ["## 2. Primary hypothesis H1: does gaze add to behaviour and exposure?", "",
+          "H1 was fixed in Protocol v1 before the analysis and has two parts, both of which must hold: (A) a likelihood-ratio test of the six gaze features in a random-intercept "
+          "logistic model that already contains the exposure offset, the design variables and the behaviour variables, and (B) a participant-grouped out-of-sample comparison of behaviour "
+          "plus gaze against behaviour alone. Methods: marginal maximum likelihood with Gauss-Hermite quadrature [CITE: mixed-effects logistic regression], repeated nested "
+          "participant-grouped cross-validation, participant-level bootstrap [CITE: cluster bootstrap], block permutation of gaze across participants.", "",
+          f"- Claim A: LRT chi-square {pa['lrt']['stat']:.2f} on {pa['lrt']['df']:.0f} df, p = {pa['lrt']['p']:.3f}; participant-block permutation p = {a['permutation_lrt']['p']:.3f} (run `h1_claim_a`).",
+          f"- Claim B: mean out-of-fold AUROC {ci(m['B']['auroc'], m['B']['auroc_ci'])} for behaviour and {ci(m['BG']['auroc'], m['BG']['auroc_ci'])} for behaviour plus gaze; "
+          f"difference {d['point']:+.3f} [{d['ci'][0]:+.3f}, {d['ci'][1]:+.3f}]; permuted-gaze control p = {b['permutation']['p_auc_BG_ge_obs']:.3f} (run `h1_claim_b`).",
+          "- By the rule in the protocol, H1 is supported only if both claims hold. Neither does: **H1 is not supported.**", "",
+          "Pre-specified sensitivity analyses (likelihood-ratio test of the same six gaze features):", "",
+          *table(["Subset", "Rows", "Participants", "Events", "LRT chi-square", "p"], rows), "",
+          "The subset without contaminated assistant memory has fewer rows, a higher test statistic and a smaller p-value than the primary analysis. This is one of three pre-specified "
+          "sensitivity analyses, it is not corrected for multiple comparisons, and the primary analysis includes the subset's complement; it is reported as a hypothesis for new data, "
+          "not as a finding. The random-intercept variance estimate is at its lower bound in these fits, so the models are close to ordinary logistic regression.", ""]
+    return md
+
+
+SECTIONS = [s1_audit, s2_h1]
 
 
 def build(results_dir=None, out=None, audit=None):
