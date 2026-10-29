@@ -300,7 +300,25 @@ def s7_design(c):
             ""]
 
 
-SECTIONS = [s1_audit, s2_h1, s3_ml, s4_eeg, s5_slm, s6_limits, s7_design]
+def s8_deviations(c):
+    """Deviations and corrections, as logged in Decision.md."""
+    return ["## 8. Deviations and corrections", "",
+            "Everything below is recorded in `Decision.md`; none of it changes a registered result.", "",
+            "- **Redefined target** (D065): the primary target was fixed after Gate 0 had looked at the data.",
+            "- **Gate 5 started without a recorded approval** (D071): the format pilot and the accuracy pass ran before an approval was on record; nothing was rerun.",
+            "- **Duplicate consistency rows** (D076): two harness processes wrote to the same files; scoring keeps the first reply per item and seed.",
+            "- **Provisional scoring seen before the spec** (D078): numbers from an earlier scoring run were seen before the scoring spec was committed, including override-compliance figures. "
+            "Amendment A1 records this; the Gate 5 numbers carry a forking-paths caveat.",
+            "- **Override condition rerun** (D083, Amendment A2): the original pass was produced next to another GPU process and outside the analysis session; it was rerun cleanly under a rule written before scoring.",
+            "- **Missing mistral reply filled** (D083): one item of the mistral consistency pass was absent, a single resumed call at the same settings filled it, and the duplicates in the raw log remain.",
+            "- **Post-hoc follow-ups** (D074, D075): the extended ridge grid and the EEG detrending are labelled post-hoc and do not replace the pre-specified analyses.",
+            "- **History rewrite and tag move** (D077): unpushed commits were rewritten to remove participant-linked content before publication, so hashes recorded in the registry are the pre-rewrite ones "
+            "(`docs/audit/HASH_MAP.md` maps them). The `protocol-v1` tag was moved to the rewritten protocol commit; the protocol file itself is byte-identical.",
+            "- **Local backups removed after the push** (D084).",
+            ""]
+
+
+SECTIONS = [s1_audit, s2_h1, s3_ml, s4_eeg, s5_slm, s6_limits, s7_design, s8_deviations]
 
 
 def build(results_dir=None, out=None, audit=None):
