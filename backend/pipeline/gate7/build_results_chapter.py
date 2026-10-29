@@ -10,7 +10,7 @@ import re
 
 from ..gate2.benchmark import load_gate3
 from ..gate2.config import REPO_ROOT
-from .build_final_report import LEARNERS, SETS, SLMS, Reg, ci, f, pp, table
+from .build_final_report import LEARNERS, SETS, SIMPLE_LEARNER, SIMPLE_SET, SLMS, Reg, ci, f, pp, table
 
 
 class Ctx:
@@ -106,7 +106,48 @@ def s2_h1(c):
     return md
 
 
-SECTIONS = [s1_audit, s2_h1]
+def s3_ml(c):
+    """ML benchmark (Gate 3)."""
+    g3 = {k: c.get(f"g3_grid_{k}") for k, _ in LEARNERS}
+    s1, s2, s8 = c.get("g3_secondary_S1"), c.get("g3_secondary_S2"), c.get("g3_exploratory_S8")
+    names = dict(LEARNERS)
+    rows, cand = [], []
+    for k, name in LEARNERS:
+        m = g3[k]
+        for st in SETS:
+            pt, ic = m["point"][st], m["ci"][st]["auroc"]
+            rows.append([name, st, ci(pt["auroc"], ic), f(pt["brier"]), f(pt["calib_slope"], 2), f(pt["false_safe_B"], 2), f(pt["false_warning_B"], 2)])
+            cand.append(dict(learner=k, set=st, auroc=pt["auroc"], ci=ic))
+    best = max(cand, key=lambda x: x["auroc"])
+    tied = [x for x in cand if x["ci"][1] >= best["ci"][0] and x["ci"][0] <= best["ci"][1]]
+    simple = min(tied, key=lambda x: (SIMPLE_SET[x["set"]], SIMPLE_LEARNER[x["learner"]]))
+    pr = []
+    for k, name in LEARNERS:
+        for key, lab in (("B_minus_B0", "B - B0"), ("G_minus_B0", "G - B0"), ("BG_minus_B0", "BG - B0")):
+            x = g3[k]["paired"][key]["auroc"]
+            pr.append([name, lab, f"{x['mean']:+.3f} [{x['ci'][0]:+.3f}, {x['ci'][1]:+.3f}]"])
+    md = ["## 3. Machine-learning benchmark", "",
+          "Three learners (ridge with the exposure offset, random forest, gradient boosting) were compared on four feature sets with the same participant-grouped nested cross-validation: "
+          "B0 (exposure and design only), B (adds behaviour), G (adds gaze to B0) and BG (behaviour and gaze). Metrics are mean out-of-fold AUROC with a 95% participant-level bootstrap "
+          "interval; Brier score and calibration slope describe probability quality; the last two columns give the error rates at the operating point chosen for a recall of 0.80 "
+          "in the training folds, reported together because lowering one raises the other.", "",
+          *table(["Learner", "Set", "AUROC [CI]", "Brier", "Calibration slope", "False-safe at recall-0.80 point", "False-warning at that point"], rows), "",
+          "Paired AUROC differences to the exposure-only set B0 (participant bootstrap):", "",
+          *table(["Learner", "Contrast", "Difference [CI]"], pr), "",
+          f"- The highest mean AUROC is {names[best['learner']]} with set {best['set']}, {ci(best['auroc'], best['ci'])}. {len(tied)} of {len(cand)} model-set pairs have an interval that overlaps it. "
+          f"Under the tie rule fixed in the protocol (simpler model wins) the **best predictive model is {names[simple['learner']]} with set {simple['set']}**, AUROC {ci(simple['auroc'], simple['ci'])}"
+          + (", which is the exposure-only reference: it contains no behaviour, gaze or EEG feature." if simple["set"] == "B0" else "."),
+          f"- Gaze alone against exposure (S1): LRT p = {s1['lrt']['p']:.3f}, AUROC difference {s1['delta_auroc']['mean']:+.3f} [{s1['delta_auroc']['ci'][0]:+.3f}, {s1['delta_auroc']['ci'][1]:+.3f}], permutation p = {s1['permutation']['p']:.3f}.",
+          f"- Early window only, the first {s2['early_window_s']:.0f} s of the decision window (S2): LRT p = {s2['lrt']['p']:.3f}, AUROC difference {s2['delta_auroc_BGE_minus_BE']['mean']:+.3f} "
+          f"[{s2['delta_auroc_BGE_minus_BE']['ci'][0]:+.3f}, {s2['delta_auroc_BGE_minus_BE']['ci'][1]:+.3f}].",
+          f"- Does any pre-specified model beat B0 with an interval above zero? {'Yes' if s8['any_prespecified_model_beats_B0_with_ci_above_zero'] else 'No'}.", "",
+          "The random forest with behaviour or gaze features is associated with a lower AUROC than B0 in this sample, which is what over-fitting to noise features would look like; "
+          "it is not evidence that the features are harmful. The error rates at the recall-0.80 point show that every model pays for its recall with a high false-warning rate, "
+          "and no operating point was validated on separate data.", ""]
+    return md
+
+
+SECTIONS = [s1_audit, s2_h1, s3_ml]
 
 
 def build(results_dir=None, out=None, audit=None):
