@@ -2740,3 +2740,38 @@ Objective 2 (the SLM comparison table requested in D058): first real numbers now
 
 ### Remarks
 To make this comparison citable: save per-row predictions, run all five folds, report intervals, and add the positive-prediction rate per model so near-constant behaviour is visible directly. The video-feature extension noted in D058 does not exist yet (D059-D062 found the video usable but not for AOI mapping).
+
+
+---
+
+## D064
+
+### Date
+2026-10-29
+
+### Decision
+Adopted a gated research protocol (Gate 0 audit, Gate 1 protocol freeze, then analysis gates) and completed **Gate 0: a read-only repository and data audit**, written up in `docs/audit/GATE0_audit.md`. No model was trained and no repository code was changed during this gate. Gate 1 (protocol document only) starts only after explicit approval.
+
+### Context / Problem
+After D058-D063 the project had many post-hoc results on the same participants, a standing label history (D045), several unverified headline numbers, and no stated prediction timestamp or locked test set. The brief asked for an audit that treats earlier documentation as claims to verify.
+
+### Evidence
+Raw-recomputed, independent of the pipeline: 139 session folders for 132 participant ids; the feature table (1,123 rows, 126 participants) reproduced exactly from raw logs; label normalisation verified (logged attack agrees with the layout's attack flag in 815/815 charge events); decision-level risky base rate 34.73%, participant-level 88.9% with at least one risky decision; 67 EEG-qualified participants confirmed. New findings: risky rate depends on randomised kiosk exposure (0.0/26.5/61.5/67.1% for 0/1/2/3 attacked kiosks); the existing behaviour-only AUROC (about 0.67) is close to the skip-vs-charge ceiling (0.715); gaze features are near chance among charge decisions (descriptive AUROC 0.49-0.52); the in-game assistant is a recommendation engine and neither its responses nor its condition are logged; 25 hardcoded Mac paths remain in 13 files. Not reproduced: "~49 positive participants".
+
+### Alternatives Considered
+(a) Continue iterating on the existing ablation tables. (b) Start Gate 1 in the same step. (c) Fix the label/target and the Mac paths immediately.
+
+### Why Alternatives Were Not Chosen
+(a) The tables answer a different question than stated (charge vs skip, confounded with exposure). (b) The brief requires approval between gates. (c) Code changes are out of scope for Gates 0 and 1; the target redefinition is a Gate 1 decision.
+
+### Implementation
+`docs/audit/GATE0_audit.md` (new). No code, data or model files changed.
+
+### Status
+Gate 0 complete; awaiting approval. Part of Decision.md D001-D044, the Research Audit PDFs, several `check_*` scripts and the demographics files were not reviewed in this gate.
+
+### Impact
+Reframes earlier results as preliminary or invalid for modality claims (D037, D045-D057, D063 for the question asked) without editing those entries; narrows the primary question to behaviour vs behaviour+gaze within charge decisions with exposure accounted for, pending Gate 1.
+
+### Remarks
+Earlier entries are not edited. This entry supersedes none of them; it adds a verification layer. Wording rule going forward: "associated with" and "predictive of", never causal.
