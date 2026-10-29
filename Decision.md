@@ -2845,3 +2845,38 @@ Gate 2 runs only what the frozen protocol specifies for H1 (B+exposure vs B+G+ex
 
 ### Remarks
 Estimation engine for the mixed model is not part of the frozen text (the protocol leaves it to Gate 2); the choice is recorded as its own entry.
+
+
+---
+
+## D067
+
+### Date
+2026-10-29
+
+### Decision
+Chose the estimation engine for the primary mixed model (option B: an in-repo Python implementation of random-intercept logistic regression by Gauss-Hermite marginal maximum likelihood; R was not installed) and ran Gate 2, the primary analysis of Protocol v1 (frozen in D066). **Result: H1 is not supported.** Claim A (6-df likelihood-ratio test of the gaze block beyond exposure, design covariates and behaviour): chi-square 8.17, p = 0.226 (participant-block permutation p = 0.387). Claim B (paired out-of-sample AUROC, B+G minus B): +0.005, 95% participant-bootstrap CI [-0.006, +0.015], permutation p = 0.49. By the protocol's rule: no evidence that gaze adds to behaviour for this target at this sample size. Full report: `docs/analysis/GATE2_report.md`.
+
+### Context / Problem
+D066 froze the protocol with the engine left open. You chose option B plus installation of statsmodels, PyYAML and pytest into the project's Windows virtual environment (pytest pinned below version 9, which crashed on this Python 3.10.0rc2); R was skipped.
+
+### Evidence
+Engine validated by 22 passing tests: agreement with statsmodels and with ordinary logistic regression when the random-effect variance is fixed near zero, analytic-gradient check, quadrature convergence, simulation recovery of known parameters, near-nominal Type-I error and good power of the LRT, boundary behaviour. The analysis table reproduces the Gate 1 counts (492 rows, 112 participants, 220 events). Runs are in `results/registry.csv` (code commit 5672700, clean tree). The random-intercept variance is estimated at zero in every fit, so mixed and ordinary logistic regression agree. Sensitivity analyses: E2 p = 0.31, S4 p = 0.33, **S3 (drop RAG-contaminated sessions) p = 0.019**, a nominally significant exploratory lead on a 77-participant subset, not pursued here. In nested CV the inner loop chose the smallest C in the grid in 95-99% of folds, so predictions of B0, B and B+G are almost identical.
+
+### Alternatives Considered
+(a) R `lme4` as the primary engine; (b) R as an additional one-time cross-check; (c) statsmodels GEE/variational mixed model only.
+
+### Why Alternatives Were Not Chosen
+(a) and (b) need a second language and several GB of installs; the data show no detectable clustering, so the mixed model coincides with ordinary logistic regression and an in-repo, tested engine is sufficient. (c) does not give a maximum-likelihood random-intercept test as the protocol specifies.
+
+### Implementation
+`backend/pipeline/gate2/` (engine, config loader, table builder, grouped CV with bootstrap and permutation, registry, H1 runner, 22 tests), `configs/gate2_h1.yaml` (seeds fixed before running), `results/registry.csv` plus run summaries (row-level artifacts and analysis tables are gitignored), `docs/analysis/GATE2_report.md`.
+
+### Status
+Gate 2 complete; awaiting approval for Gate 3. The feature table is still a committed artefact: `build_feature_table.py` keeps its Mac paths and was not changed. S2, S1, S5-S8, EEG, model grid and threshold-based metrics are not run.
+
+### Impact
+D052's gaze association is not supported once exposure is offset and the skip/charge path removed. Earlier D037/D045-D057 ablations remain answers to the legacy target. No change to D060-D062 (AOI route closed).
+
+### Remarks
+S3 must not be chased on these participants (a data-driven fork); a confirmatory check would need new data under a pre-specified analysis. The narrow Claim B interval reflects heavy shrinkage, not proof that small effects were excluded for unpenalised models.
