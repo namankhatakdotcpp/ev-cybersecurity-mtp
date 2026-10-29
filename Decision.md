@@ -2590,3 +2590,51 @@ Weakens D030's diagnosis: the left/right disagreement is a constant per-eye offs
 
 ### Remarks
 Next step if AOI recovery is pursued: locate the panel per frame (template or corner detection on the video) so each gaze sample can be expressed in panel coordinates, and test the gaze-to-pixel map on click events using the interaction log's selection pages. Frame-index alignment must use pts, and the constant 0.475 left/right offset should be understood (likely a per-eye viewport convention) before any mapping is trusted. Open question for the mentor: whether Varjo Base recordings were run with a fixed calibration step.
+
+
+---
+
+## D061
+
+### Date
+2026-10-29
+
+### Decision
+Followed D060 by building per-frame kiosk-card localisation for the same three pilot sessions (021, 041, 100) and measuring a gaze AOI hit rate against each participant's true kiosk choice. **Result: NOT validated.** No gaze-to-pixel convention puts the majority of gaze on the true kiosk consistently across the three sessions, and where a convention appears to work (041), time-shifted control gaze does just as well. D060's PARTIALLY verdict is unchanged: labels are recoverable in principle from the video, the gaze mapping is not.
+
+### Context / Problem
+D060 left per-frame panel localisation and an AOI hit rate as not done. The UI panel is world-anchored (D060), so any AOI test needs the card positions measured per frame.
+
+### Evidence
+**Localisation (measured).** Each frame's Set Amount buttons are found by colour (blue for available kiosks, brown for "in use") and each kiosk card is taken as a rectangle anchored on its own button (width of the button, height 1.85x its width upward, scaled per frame). Only frames with an unambiguous 3-button row are used (brown button only accepted as Kiosk 3, as seen in the 021 and 100 frames): 16 of 54 frames (021), 22 of 54 (041), 8 of 54 (100). The rest are keypad-dialog frames (cards blurred) or frames with a card off-screen, and are excluded, not guessed. Overlays checked by eye on one frame per session: 041's boxes sit well on the three cards; 021's boxes are taller than the real cards and slightly offset. The pointer-in-card check is mixed: 041, pointer inside the true card (K2) in 82% of detected frames; 100, 38% (n=8); 021, 0% in the true card because in the frame inspected the pointer was on the AI Assistant button, outside every card, so that low value reflects where the participant was pointing, not necessarily a localisation fault.
+
+**Hit rate (samples within 0.25 s of each frame; mean of left/right eye projected coordinates; the four x/y flip conventions of the signed-normalized scale).** Share of in-card gaze samples that fall in the true kiosk's card (chance is about 1/3):
+
+| Session (true kiosk) | Frames | Best convention | Share on true card | Time-shifted control gaze |
+|---|---|---|---|---|
+| 021 (K1) | 16 | any | 0.00 for all four | 0.00 |
+| 041 (K2) | 22 | no flip x | 0.67 | 0.41-0.77 |
+| 100 (K1) | 8 | no flip x | 0.58 | 0.00-0.07 |
+
+With x flipped, 041 gives 0.53 (controls 0.55-0.58) and 100 gives 0.00 (controls 0.06-0.48). In the last 10 s before the click only 1-3 frames per session qualify (021 0.0; 041 0.72; 100 1.0), too few to read anything into. The "no flip x" convention gets 2 of 3 sessions above chance, but fails 021, the D026/D030 test case, where gaze never lands on Kiosk 1 under any convention (D026's result reproduced independently). 041's apparent success is not specific to gaze timing: gaze shifted by 30 or 60 s scores the same or higher, which is what you would expect if gaze simply rests on the middle card. 100's result beats its controls but rests on 8 frames in which Kiosk 1 is partly off-screen.
+
+### Reason
+Time-shifted gaze was added as a control because, with three cards and a gaze distribution that favours the centre, a hit rate above 1/3 on one session could come from card placement alone.
+
+### Alternatives Considered
+(a) Report the best convention per session and call the pilot a success. (b) Hand-annotate card rectangles on every frame. (c) Stop at D060 without a hit rate.
+
+### Why Alternatives Were Not Chosen
+(a) choosing the best convention per session after seeing the outcome is the fit-then-claim pattern this log rejects, and the controls show why. (b) is a larger manual effort than this pilot's scope and would not change the mapping question. (c) left the AOI question the pilot was meant to answer unmeasured.
+
+### Implementation
+`backend/pipeline/video_pilot/p5_panel_localisation_hit_rate.py` (reuses the 162 frames from D060; extracts none; total extracted across D060 and D061 is 180, below the 300 cap). Per-frame results stay in `D:\MTP_scratch\video_pilot\win\aoi_hits.csv`, not committed.
+
+### Status
+Verified: the localisation approach works on frames where three buttons are visible; the hit rates and controls are real measurements. Not validated: any gaze-to-pixel mapping. Limitations: 3 participants, 8-22 usable frames each, button-anchored rectangles are approximations of curved cards, the in-use-means-Kiosk-3 assumption was read from only two sessions' frames, and the mapping used the mean of both eyes.
+
+### Impact
+Reinforces D030/D060: a fixed 2D mapping from `gaze_projected_*` to video pixels is not reliable for this data. Does not touch D025's RQ1 rescoping. Reproduces D026's 021 failure independently from video, on top of D030's code-based check. The video's usefulness is for per-frame panel position (cheap) and pointer position (cheap); the missing piece is a gaze-to-view mapping that is correct, and no evidence for one exists yet.
+
+### Remarks
+Before any larger extraction, the open question is what `gaze_projected_*` is relative to: the constant 0.475 left/right offset (D060) suggests each eye is expressed in its own viewport convention, and the video shows one mono view. Using `gaze_forward`/`gaze_origin` with the render camera's pose (needs head pose, D031) is the principled alternative and is not testable from these files alone. Ask the mentor or check Varjo's documentation for the definition of `gaze_projected_to_*_view`.
