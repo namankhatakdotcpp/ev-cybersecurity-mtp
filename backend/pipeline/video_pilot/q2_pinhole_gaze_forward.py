@@ -3,15 +3,19 @@ Calibrate on 021 only; test on 041/100 without refit. Extracts <=24 new frames (
 import cv2, numpy as np, pandas as pd, os, subprocess, itertools, json, sys
 W, H = 2048, 1536
 FFMPEG = "ffmpeg"
-V = r"Varjo"
-R = r"backend\raw_data"
+import sys, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3]))
+from backend.pipeline.paths import RAW, VARJO, SESSION_MAP, pilot_sessions
+V = str(VARJO)
+R = str(RAW)
+PS = pilot_sessions()
 SC = r"D:\MTP_scratch\video_pilot"
-INFO = {"021": ("session_<redacted>", "varjo_capture_<timestamp>.mp4", 1, 37.0),
-        "041": ("session_<redacted>", "varjo_capture_<timestamp>.mp4", 2, 209.5),
-        "100": ("session_<redacted>", "varjo_capture_<timestamp>.mp4", 1, 355.8)}
+INFO = {"021": (PS["021"]["session"], PS["021"]["video"], 1, 37.0),
+        "041": (PS["041"]["session"], PS["041"]["video"], 2, 209.5),
+        "100": (PS["100"]["session"], PS["100"]["video"], 1, 355.8)}
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # --- reuse localisation + pointer code verbatim from D061's script (functions only)
-src = open(r"backend\pipeline\video_pilot\p5_panel_localisation_hit_rate.py", encoding="utf-8").read()
+src = open(pathlib.Path(__file__).with_name("p5_panel_localisation_hit_rate.py"), encoding="utf-8").read()
 ns = {"cv2": cv2, "np": np, "pd": pd, "os": os, "itertools": itertools, "json": json}
 exec("W, H = 2048, 1536\n" + "def blobs" + src.split("def blobs")[1].split("CONV =")[0], ns)  # blobs, detect_cards, find_cursor, inside
 detect_cards, find_cursor, inside = ns["detect_cards"], ns["find_cursor"], ns["inside"]

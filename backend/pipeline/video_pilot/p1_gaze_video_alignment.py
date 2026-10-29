@@ -1,6 +1,9 @@
 import pandas as pd, numpy as np, glob, os, json
-R = r"backend\raw_data"
-M = pd.read_csv(r"backend\pipeline\video_gaze_session_map.csv", dtype=str)
+import sys, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3]))
+from backend.pipeline.paths import RAW, VARJO, SESSION_MAP, pilot_sessions
+R = str(RAW)
+M = pd.read_csv(str(SESSION_MAP), dtype=str)
 for pid in ["021", "041", "100"]:
     row = M[M.participant_id == pid].iloc[0]
     sess = row.session_folder
@@ -16,7 +19,7 @@ for pid in ["021", "041", "100"]:
     print(f" frame_number vs rel slope = {sl[0]:.4f} frames/s")
     print(f" status==2 frac {np.mean(g.status==2):.3f}, valid(status2&stab>0) {np.mean((g.status==2)&(g.stability>0)):.3f}")
     # same file in Varjo folder identical size?
-    vp = os.path.join(r"Varjo", pid + ".csv")
+    vp = os.path.join(str(VARJO), pid + ".csv")
     print(" Varjo copy same size as session copy:", os.path.getsize(vp) == os.path.getsize(os.path.join(R, sess, pid + ".csv")))
     ia = glob.glob(os.path.join(R, sess, "interactions*.csv"))[0]
     I = pd.read_csv(ia)

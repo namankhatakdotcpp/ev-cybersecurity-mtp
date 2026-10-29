@@ -4,6 +4,7 @@ validation predictions of each training fold, and weighted participant-bootstrap
 
 Everything fitted (transformations, hyperparameters, thresholds) is fitted inside the training fold. Random state
 comes only from seeds in the configuration."""
+import os
 import numpy as np
 import pandas as pd
 import yaml
@@ -20,7 +21,7 @@ def load_gate3(path=None):
     p = path or REPO_ROOT / "configs" / "gate3_grid.yaml"
     with open(p, "r", encoding="utf-8") as f:
         cfg["g3"] = yaml.safe_load(f)
-    cfg["g3"]["_path"] = str(p)
+    cfg["g3"]["_path"] = os.path.relpath(p, REPO_ROOT).replace(os.sep, "/")   # repo-relative: provenance must not embed a machine path
     return cfg
 
 

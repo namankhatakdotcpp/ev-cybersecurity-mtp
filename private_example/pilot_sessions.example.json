@@ -1,0 +1,17 @@
+{
+ "021": {
+  "session": "session_YYYYMMDD_HHMMSS_021",
+  "video": "varjo_capture_YYYY-MM-DD_HH-MM-SS-mmm.mp4",
+  "first_frame_epoch": 0.0
+ },
+ "041": {
+  "session": "session_YYYYMMDD_HHMMSS_041",
+  "video": "varjo_capture_YYYY-MM-DD_HH-MM-SS-mmm.mp4",
+  "first_frame_epoch": 0.0
+ },
+ "100": {
+  "session": "session_YYYYMMDD_HHMMSS_100",
+  "video": "varjo_capture_YYYY-MM-DD_HH-MM-SS-mmm.mp4",
+  "first_frame_epoch": 0.0
+ }
+}

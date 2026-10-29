@@ -1,10 +1,10 @@
 """Read-only: derive Varjo gaze CSV <-> mp4 <-> session-folder map. Stdlib only."""
 import csv, os, re, struct, sys, glob, datetime as dt
 
-ROOT = r"<project root>"
-VARJO = os.path.join(ROOT, "Varjo")
-RAW = os.path.join(ROOT, "backend", "raw_data")
-OUT = os.path.join(ROOT, "backend", "pipeline", "video_gaze_session_map.csv")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+from backend.pipeline.paths import RAW as _RAW, VARJO as _VARJO, SESSION_MAP, PRIVATE
+VARJO, RAW, OUT = str(_VARJO), str(_RAW), str(SESSION_MAP)
+os.makedirs(str(PRIVATE), exist_ok=True)
 IST = dt.timezone(dt.timedelta(hours=5, minutes=30))
 
 

@@ -3260,3 +3260,37 @@ Consistency agreement figures may differ slightly from a clean single-process ru
 
 ### Remarks
 None.
+
+---
+
+## D077
+
+### Date
+2026-10-29
+
+### Decision
+Cleaned the 48 unpushed commits for publication, as approved after `docs/audit/PUSH_REVIEW.md`: configurable roots instead of a hardcoded lab folder, participant-linked data moved behind an ignored `private/` directory, provenance paths made repo-relative, identifiers removed from the new documents, and the unpushed history rewritten so the removed items are not in the range that will be pushed. Nothing was pushed.
+
+### Context / Problem
+The review found a participant-to-session-to-timestamp table (`video_gaze_session_map.csv`) in the unpushed history, a lab-folder path naming the students, mentor and supervisor in 7 scripts and 6 generated files, three participants' session folders and capture times in the video-pilot scripts, and session and path details in the Gate 0 report and in one earlier Decision entry.
+
+### Evidence
+Guard test `backend/pipeline/tests/test_no_private_strings.py` passes (no lab-folder name in any tracked file; no home paths, session folder names or capture names in the Gate files; the private directory is ignored and the map untracked). Verification of the rewritten range is recorded below in the Status line.
+
+### Alternatives Considered
+Fresh single-commit public repository with this history kept private.
+
+### Why Alternatives Were Not Chosen
+You approved the rewrite of the unpushed range instead.
+
+### Implementation
+`backend/pipeline/paths.py` (`EV_PROJECT_ROOT`, `EV_RAW_DATA_DIR`, `EV_VARJO_DIR`, `EV_PRIVATE_DIR`); the 7 scripts read roots and pilot sessions from it; `private_example/pilot_sessions.example.json`; `benchmark.load_gate3` stores the config path relative to the repo; capture filenames in this file's unpushed entries replaced by `varjo_capture_<timestamp>.mp4`; session folder name and home-directory paths in `docs/audit/GATE0_audit.md` generalised; provenance paths scrubbed in the 5 Gate 3 `summary.json` files and `results/registry.csv` (metadata only; no hash covers these fields). Backup branch `backup/pre-push-20261029` holds the pre-cleanup history. Earlier entries that were already on origin were not edited.
+
+### Status
+Complete locally; not pushed.
+
+### Impact
+Commit hashes in the unpushed range change, so the `git_commit` values in the registry rows refer to pre-rewrite hashes (mapping is in `docs/audit/HASH_MAP.md`). Results are unchanged. The local copy of the session map and the pilot session list live in `private/` (ignored); regenerate the map with `build_video_gaze_map.py`.
+
+### Remarks
+Pre-existing public content (`feature_table.csv`, older Decision entries, the `aoi_free_pilot.py` session names, a Windows account name in `main.py`) is untouched and remains a separate decision.

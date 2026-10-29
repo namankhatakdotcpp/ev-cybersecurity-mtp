@@ -1,6 +1,10 @@
 import pandas as pd, os, glob, json
-R = r"backend\raw_data"
-FF = {"021": (0.0, 125.8, "session_<redacted>"), "041": (0.0, 1640.0, "session_<redacted>"), "100": (0.0, 970.0, "session_<redacted>")}
+import sys, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3]))
+from backend.pipeline.paths import RAW, VARJO, SESSION_MAP, pilot_sessions
+R = str(RAW)
+PS = pilot_sessions()
+FF = {"021": (PS["021"]["first_frame_epoch"], 125.8, PS["021"]["session"]), "041": (PS["041"]["first_frame_epoch"], 1640.0, PS["041"]["session"]), "100": (PS["100"]["first_frame_epoch"], 970.0, PS["100"]["session"])}
 pd.set_option("display.width", 220)
 out = []
 for pid, (ff, dur, sess) in FF.items():

@@ -3,8 +3,12 @@ Uses the 162 frames already extracted by the previous step; extracts nothing new
 import cv2, numpy as np, pandas as pd, os, itertools, json
 W, H = 2048, 1536
 BASE = r"D:\MTP_scratch\video_pilot\win"
-R = r"backend\raw_data"
-S = {"021": ("session_<redacted>", 37.0, 62.055, 1), "041": ("session_<redacted>", 209.5, 234.444, 2), "100": ("session_<redacted>", 355.8, 380.766, 1)}
+import sys, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3]))
+from backend.pipeline.paths import RAW, VARJO, SESSION_MAP, pilot_sessions
+R = str(RAW)
+PS = pilot_sessions()
+S = {"021": (PS["021"]["session"], 37.0, 62.055, 1), "041": (PS["041"]["session"], 209.5, 234.444, 2), "100": (PS["100"]["session"], 355.8, 380.766, 1)}
 rng = np.random.default_rng(0)
 
 

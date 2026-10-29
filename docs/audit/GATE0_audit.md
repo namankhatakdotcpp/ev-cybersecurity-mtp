@@ -39,7 +39,7 @@ Evidence kinds used: **raw** = recomputed from `backend/raw_data` interaction lo
 ## 2. Data inventory
 
 Raw (`backend/raw_data`):
-- 139 session folders; 132 distinct participant ids, contiguous 1-132. One folder has a non-standard name (a session folder with a duplicated id suffix and a trailing note; the pipeline parses the leading id 126).
+- 139 session folders; 132 distinct participant ids, contiguous 1-132. One folder has a non-standard name (a duplicated id suffix and a trailing free-text note; the pipeline parses the leading id 126).
 - Six participants have more than one folder: 001 (2), 022 (2), 034 (2), 055 (3), 064 (2), 082 (2). The pipeline keeps the folder with the most interaction lines and drops the rest; these drops are documented in D019/D029 but the rule is a heuristic ("larger log = the real session").
 - Missing files: 1 folder without an interactions log, 1 without `consent.json`/`demographics.json`/`system_config.json`; `final_points.json` is absent from 97 of 139 folders (it appears only in later sessions). 8 folders have no gaze file (6 are duplicate/aborted folders; the canonical sessions without gaze are 069 and 132).
 - Gaze file naming is irregular: 001/002 use `varjo_gaze_output_<timestamp>.csv`, 032 has `032_1.csv` and `032_2.csv`, 011 has a gaze file my reader could not decode as UTF-8 (the pipeline obtained gaze rows for 011, so which file it used is unverified).

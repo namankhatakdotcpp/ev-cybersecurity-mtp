@@ -16,8 +16,12 @@ for p, g in D.groupby("pid"):
     gx = (g.lx + g.rx) / 2; gy = (g.ly + g.ry) / 2
     print(p, "corr(gaze_x,cursor_x)=%.2f corr(gaze_y,cursor_y)=%.2f n=%d" % (np.corrcoef(gx, g.cx)[0, 1], np.corrcoef(gy, g.cy)[0, 1], len(g)))
 # L/R offset vs focus_distance over the FULL gaze files
-R = r"backend\raw_data"
-for pid, sess in [("021", "session_<redacted>"), ("041", "session_<redacted>")]:
+import sys, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[3]))
+from backend.pipeline.paths import RAW, VARJO, SESSION_MAP, pilot_sessions
+R = str(RAW)
+PS = pilot_sessions()
+for pid, sess in [(k, PS[k]["session"]) for k in ("021", "041")]:
     g = pd.read_csv(os.path.join(R, sess, pid + ".csv"), usecols=["status", "stability", "focus_distance", "gaze_projected_to_left_view_x", "gaze_projected_to_right_view_x"]).apply(pd.to_numeric, errors="coerce").dropna()
     g = g[(g.status == 2) & (g.stability > 0)]
     d = g.gaze_projected_to_left_view_x - g.gaze_projected_to_right_view_x

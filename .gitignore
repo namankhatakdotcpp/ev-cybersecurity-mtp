@@ -54,3 +54,5 @@ Varjo/
 results/_tables/
 results/**/artifacts/
 results/_slm/
+# Participant-linked tables and pilot session lists (see backend/pipeline/paths.py); layout example is in private_example/
+private/
