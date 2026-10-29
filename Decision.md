@@ -2497,3 +2497,49 @@ Objective 2 (the SLM comparison table the user requested) - deferred, not abando
 
 ### Remarks
 **What stays Mac-appropriate going forward**: desk-work that needs no GPU, no video data, and no new large downloads - diffing the two `main.py`/config copies, drafting the Step 13 trust-study design doc, verifying literature citations, checking the speaking script against D045, folding D052-D058 into the refreshed Research Audit (now including the architecture-mismatch finding as its most important item), and drafting the message to Ranik. **What moves to the lab PC**: this SLM comparison (with or without video), and all of Objective 3's remaining physical-hardware items (already established as lab-only in D053-D056). **Correction to this entry's own earlier framing**: the MLP phase (Section 10.9's Phase 1) WAS actually run for real, D037 - behaviour+gaze MLP scored balanced_acc=0.497/AUROC=0.522 (n=1057), below the 0.632/0.712 Phase A (RandomForest) baseline it needed to beat - so Phase C (LSTM/GRU) was correctly gated off, not "never attempted" out of neglect. Only LSTM/GRU and the multimodal Transformer (Phases 2-3) remain genuinely untried on either machine, since the MLP never cleared the gate required to proceed to them.
+
+
+---
+
+## D059
+
+### Date
+2026-10-29
+
+### Decision
+Located the Varjo screen-capture videos on the lab PC (`MTP\Varjo\`, alongside the raw Varjo gaze CSVs) and derived, read-only, a map from each gaze CSV to its mp4 and, where one exists, its `raw_data` session folder: `backend/pipeline/video_gaze_session_map.csv`, built by `backend/pipeline/build_video_gaze_map.py`. No frames were extracted, no video content was decoded, nothing under `Varjo/` or `raw_data/` was modified.
+
+### Context / Problem
+D058 said the video files were expected on the lab PC but that nothing had been checked. D027/D031 left the identity of the gaze-capture tool and the gaze-to-video link open. This entry records what the files on disk actually show.
+
+### Evidence
+**Inventory**: `Varjo/` holds 158 `varjo_capture_<local timestamp>.mp4` files (about 1.47 TB; 0.6-14 GB each; 2026-03-30 to 2026-08-03) and 169 gaze CSVs: 128 purely numeric names (`002`-`131`, including the odd `1170`), 3 irregular (`032_1`, `032_2`, `126_glitched data`), and 38 named `varjo_gaze_output_<timestamp>.csv` (D019's participants 001/002 naming issue, now seen at scale). Container metadata (mvhd box, header read only) gives duration for 156 of the 158 mp4s; 151 report 30 fps. Two mp4s (`2026-07-02_17-27-54`, `2026-07-31_15-22-15`) have no readable moov duration in the first pass and were not investigated further.
+
+**Link between gaze and video**: each gaze CSV's first row gives `relative_to_unix_epoch_timestamp` and `relative_to_video_first_frame_timestamp`; their difference is the epoch time of the video's first frame. Compared with the mp4 filename start time (read as IST, UTC+5:30), that difference is 0.00 s for all 138 high-confidence matches (min = max = 0). Filename time and gaze epoch are independent sources, so this agreement is strong evidence the pairing is correct, not a by-construction result.
+
+**Match result (169 gaze CSVs)**: high 138, medium 15, none 16. Of the 128 numeric CSVs, 124 have an mp4; the four without are `002`-`005`. 123 numeric CSVs have both an mp4 and a matching `raw_data` session folder. 153 of 158 mp4s are matched to some gaze CSV; five are not (`04-21_18-17-59`, `04-28_15-24-14`, `06-24_15-22-17`, `07-16_15-15-50`, `07-28_15-34-18`). Of the 41 non-numeric CSVs (38 timestamp-named plus 3 irregular), the timestamp-named ones matched at high confidence for 19 of 38; the 2026-04-11 to 04-15 gaze files have no mp4 in `Varjo/` at all, and the 2026-03-30 pair match only at medium confidence (video much longer than gaze).
+
+**Spot-checks (video duration vs gaze span)**: `032_1` 524.8 s vs 524.8 s; `1170` 209.0 s vs 209.0 s (no matching session folder named 1170); `126_glitched data` 2076.6 s vs 2076.5 s. `096` differs by 26 s (video longer). Many medium matches have a video longer than the gaze CSV (e.g. `076` 1642 s vs 756 s, `varjo_gaze_output_2026-06-29_13-14-03-691` 8989 s vs 716 s), so a long recording does not imply a long gaze file. `130.csv`'s mp4 reports 66,862 s (18.6 h) against a 3,083 s gaze span, which is almost certainly a recording left running, not 18 hours of play.
+
+**What "1170" and "126_glitched data" are**: `1170` is a 209 s gaze file with a matching 209 s mp4 and no session folder - its name suggests a typo for 117 or a re-take, but that is a guess. `126_glitched data` has a matching 2076 s mp4 and was named by whoever flagged it; what is glitched in it was not inspected.
+
+### Reason
+A deterministic, auditable map is a prerequisite for anything that uses video (ground-truthing `gaze_projected_*` against real pixels, video feature extraction); doing it read-only and separately from any extraction avoids committing to a 1.47 TB workflow before the pairing is trusted.
+
+### Alternatives Considered
+(a) Extract frames first and match by content. (b) Match only by filename timestamp and skip checking the gaze file's own epoch fields. (c) Assume the numeric CSV for participant N belongs to the session folder `_NNN` without checking video.
+
+### Why Alternatives Were Not Chosen
+(a) 1.47 TB of decoding before knowing which videos are real sessions is wasted work. (b) filename time alone would not detect a mislabelled pair; the gaze file's own first-frame epoch is a second, independent check. (c) cannot catch the six participants with duplicate folders (D052-era discovery) or sessions with no video.
+
+### Implementation
+`backend/pipeline/build_video_gaze_map.py` (stdlib only; reads each CSV's head and tail and each mp4's moov box) and its output `backend/pipeline/video_gaze_session_map.csv`. `.gitignore` extended with `Varjo/` and `._*` so the raw CSVs (participant data) and mp4s cannot be committed.
+
+### Status
+Implemented; Verified for the 138 high-confidence matches (first-frame epoch agrees with the filename to the centisecond; three spot-checks agree on duration). Unverified: the 15 medium and 16 unmatched rows, the meaning of `1170` and `126_glitched data`, which videos are calibration/test runs, and the mp4s with no readable duration.
+
+### Impact
+Objective 3 and the gaze-capture blocker: the long-standing question of what produced the gaze CSVs now has a likely answer. The CSV column names (`varjo_gaze_output`, `relative_to_video_first_frame_timestamp`), the file prefix `varjo_capture`, and `VarjoBase.exe` running on this PC all point to Varjo Base's own recording feature. This is inferred from file names, columns and a running process; it was not confirmed in Varjo Base itself. The flowgraph scenario file is still not located (the only `.flow.json` files found are BeamNG's stock ones).
+
+### Remarks
+**Effect on earlier entries (they are not edited)**: D027/D031 (gaze-capture app location unknown): weakened - a likely candidate now exists, still unconfirmed. D019/D022 (participants 001/002 file naming, EEG/gaze coverage): consistent, extended - timestamp-named files are a whole class, not two cases. D021/D030 (the AOI-mapping gap and the vergence finding): not superseded, but no longer untestable - with video, `gaze_projected_*` can be checked against real frames, which D030 could only reason about. D058's statement that video "is not automatically unlocked" stands: the files exist, the extraction code does not. **Not done**: frame extraction, AOI recovery, any video feature.
