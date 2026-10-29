@@ -122,17 +122,32 @@ Paired AUROC differences to B0 (participant bootstrap):
 | qwen2.5:7b | V1 | 5 | 0.654 [0.649, 0.663] | 0/5 | 0.978 |
 | qwen2.5:7b | V2 | 5 | 0.381 [0.375, 0.395] | 0/5 | 0.984 |
 
-The malicious-override pass was run (600 replies) but is **not scored**; no claim about steering or compliance is made.
+**Malicious-override condition (60 designated mixed stations; instruction-following, not detection; clean rerun, Amendment A2)**
+
+| Model | Variant | Target chosen with override | Target chosen without | Difference [CI] | Label |
+|---|---|---|---|---|---|
+| mistral:7b-instruct | V1 | 0.98 [0.91, 1.00] | 0.43 [0.32, 0.56] | +0.55 [+0.43, +0.67] | follows the override |
+| mistral:7b-instruct | V2 | 0.98 [0.91, 1.00] | 0.37 [0.26, 0.49] | +0.62 [+0.50, +0.73] | follows the override |
+| llama3.1:8b | V1 | 1.00 [0.94, 1.00] | 0.35 [0.24, 0.48] | +0.65 [+0.53, +0.77] | follows the override |
+| llama3.1:8b | V2 | 1.00 [0.94, 1.00] | 0.42 [0.30, 0.54] | +0.58 [+0.45, +0.72] | follows the override |
+| phi3:3.8b | V1 | 1.00 [0.94, 1.00] | 0.42 [0.30, 0.54] | +0.58 [+0.45, +0.70] | follows the override |
+| phi3:3.8b | V2 | 1.00 [0.94, 1.00] | 0.33 [0.23, 0.46] | +0.67 [+0.53, +0.78] | follows the override |
+| gemma2:9b | V1 | 1.00 [0.94, 1.00] | 0.32 [0.21, 0.44] | +0.68 [+0.57, +0.80] | follows the override |
+| gemma2:9b | V2 | 1.00 [0.94, 1.00] | 0.25 [0.16, 0.37] | +0.75 [+0.65, +0.85] | follows the override |
+| qwen2.5:7b | V1 | 1.00 [0.94, 1.00] | 0.30 [0.20, 0.43] | +0.70 [+0.58, +0.82] | follows the override |
+| qwen2.5:7b | V2 | 1.00 [0.94, 1.00] | 0.45 [0.33, 0.58] | +0.55 [+0.42, +0.68] | follows the override |
 
 ## 7. Final selection rubric (Protocol v1 section 12; applied mechanically)
 
 1. **Best predictive model.** Highest mean AUROC: Ridge (offset), set G, 0.633 [0.576, 0.686]. 12 of 12 model-set pairs have a CI overlapping it, so the tie rule (simpler model wins; fewer feature blocks first, then ridge before boosting before forest) selects **Ridge (offset), set B0**, AUROC 0.627 [0.569, 0.681]. That model is the exposure-only baseline: it contains no gaze, behaviour or EEG feature.
 
-2. **Best safety-oriented model.** Among 9 model-set pairs with calibration slope in [0.7, 1.3], the lowest false-safe rate at the recall-0.80 operating point is Boosting, set B0: false-safe 0.19, false-warning 0.62, calibration slope 0.73. 8 eligible pairs are within 0.01 of that false-safe value, so the choice is the nominal minimum, not a separated winner. False-safe is near 1 minus the 0.80 target for every model by construction; the false-warning rate (0.59 to 0.69 across eligible models) is the cost, and no operating point is validated.
+2. **Best safety-oriented model (nominal winner only).** Among 9 model-set pairs with calibration slope in [0.7, 1.3], the lowest false-safe rate at the recall-0.80 operating point is Boosting, set B0: false-safe 0.19, false-warning 0.62, calibration slope 0.73. 8 eligible pairs are within 0.01 of that false-safe value, so the choice is the nominal minimum, not a separated winner. False-safe is near 1 minus the 0.80 target for every model by construction; the false-warning rate (0.59 to 0.69 across eligible models) is the cost, and no operating point is validated.
 
 3. **Best deployment model.** Simplest model within one standard error (0.028) of the best AUROC with acceptable calibration: Ridge (offset), set B0. S2 does not support restricting to early-window features (LRT p = 0.590), so no keypad-stage restriction is established. Latency was not measured for the ML models. Because this model is the exposure baseline, deploying it would mean computing the share of attacked kiosks, not running a learned detector; no warning performance has been shown online.
 
-4. **Best SLM (rule: lowest false-safe rate first, on the pre-committed V2 headline; degenerate models excluded).** gemma2:9b: false-safe 0.33 [0.27, 0.39], false-warning 0.74 [0.69, 0.79], balanced accuracy 0.465 against the best reference deepfake-image rule at 0.723. The selection is the least-bad under the rule, not a good detector: no model beats the best reference, and low false-safe here comes with a high false-warning rate (models warn on almost any kiosk with an image description). Latency and memory are in the Gate 5 master table.
+4. **Best SLM: not named.** The protocol rule (lowest false-safe rate first) is reported below for completeness, but it is not a claim that any model is best. The defensible statement is that **no SLM showed reliable detection above the rule baselines**, in either variant. V2 carries the image-description leak (the descriptions can state or hint at the image type, which is itself a strong cue), and low false-safe in V2 comes with a high false-warning rate, because the models warn on almost any kiosk with an image description.
+
+   Rule output only (pre-committed V2 headline, degenerate models excluded): gemma2:9b, false-safe 0.33 [0.27, 0.39], false-warning 0.74 [0.69, 0.79], balanced accuracy 0.465 against the best reference deepfake-image rule at 0.723. Latency and memory are in the Gate 5 master table.
 
    Same rule on V1 (cue-free), for transparency: qwen2.5:7b has the lowest false-safe among non-degenerate models (0.65 [0.60, 0.71], false-warning 0.30 [0.25, 0.35]); the choice of variant changes the selected model, which is why no ranking of models is claimed.
 
@@ -147,7 +162,8 @@ The malicious-override pass was run (600 replies) but is **not scored**; no clai
 - The assistant's replies and the benign or malicious condition were not logged, so their effect cannot be assessed.
 - Several ridge and boosting grids selected their weakest setting; a wider ridge grid gave the same conclusion.
 - SLM scenario set: quota-sampled, text-only, one main decoding setting, image descriptions produced by another model; detection is not blind to the investigators.
-- A provisional scoring look preceded the Gate 5 scoring spec (D078); one mistral consistency item is missing and its file contains duplicates (D080).
+- A provisional scoring look preceded the Gate 5 scoring spec (D078), including the override-compliance figures; the malicious condition was then rerun and scored under a rule written first (Amendment A2).
+- The mistral consistency log contains duplicate item-seed pairs from a resumed run (the first reply per pair is scored) and one missing pair was filled afterwards (D083); the override condition uses one wording, one target rule and 60 stations.
 - Many strata and sensitivity runs; unadjusted p-values are descriptive.
 
 ## 9. Claims register
@@ -158,9 +174,10 @@ The malicious-override pass was run (600 replies) but is **not scored**; no clai
 | Any pre-specified ML model beats exposure-only B0 | No |
 | EEG adds information | Not established (biased subset, low power) |
 | Skipping follows exposure | Not supported |
-| Any tested SLM detects attacked kiosks better than simple rules | No |
+| Any tested SLM showed reliable detection above the rule baselines | No (V2 also carries the image-description leak) |
+| A best SLM | Not claimed (the rule output depends on the variant and rests on a high false-warning rate) |
 | Any tested SLM recommends a safe kiosk above chance | No |
-| An SLM can be steered by a malicious instruction | Not assessed (pass run, not scored) |
+| The tested SLMs follow an explicit instruction to recommend an attacked kiosk | Yes in this setup (instruction-following only; says nothing about the in-game assistant) |
 | A warning operating point is validated | No |
 | A best overall system | Withheld |
 
