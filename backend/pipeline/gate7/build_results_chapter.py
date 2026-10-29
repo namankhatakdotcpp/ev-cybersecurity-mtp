@@ -150,7 +150,39 @@ def s3_ml(c):
     return md
 
 
-SECTIONS = [s1_audit, s2_h1, s3_ml]
+def s4_eeg(c):
+    """EEG on the matched subset (Gate 4, exploratory) and the selection-bias report."""
+    s6, sel, det = c.get("g4_s6_ridge"), c.get("g4_selection_bias"), c.get("g6_eeg_detrended")
+    cv, cn = sel["coverage"], sel["counts"]
+    row = {x["variable"].split(" (")[0]: x for x in sel["row_level"]}
+    pl = {x["variable"]: x for x in sel["participant_level"]}
+    tr, per = row["trial_index"], pl["period"]
+    pe = s6["point"]
+    pairs = [(k, s6["paired"][k]["auroc"]) for k in s6["paired"] if k.startswith("BGE") or k == "BG_minus_B"]
+    d_ = det["primary_BGE_detrended_minus_BG"]["auroc"]
+    md = ["## 4. EEG on the matched subset (exploratory)", "",
+          "EEG was never a primary question. The four-channel consumer headset gives a minimal feature set (relative band power per channel in low-motion samples), and EEG exists "
+          "only for part of the sessions. The comparison is therefore restricted to **primary-set rows that also have EEG features**, so every feature set is evaluated on identical rows: "
+          f"{s6['n_rows']} rows from {s6['n_participants']} participants and {s6['n_events']} events (run `g4_s6_ridge`). The full cohort funnel is in `docs/audit/EEG_COHORT_FUNNEL.md`.", "",
+          *table(["Feature set", "AUROC [CI]"], [[st, ci(pe[st]["auroc"], s6["ci"][st]["auroc"])] for st in ("B0", "B", "BG", "BGE") if st in pe]), "",
+          *[f"- {k.replace('_minus_', ' minus ')} ({'primary contrast' if k == 'BGE_minus_BG' else 'exploratory, not corrected for multiple comparisons'}): {x['mean']:+.3f} [{x['ci'][0]:+.3f}, {x['ci'][1]:+.3f}]" for k, x in pairs],
+          f"- Likelihood-ratio test of the EEG block (descriptive only, {s6['lrt_BGE_vs_BG']['df']:.0f} df on {s6['n_events']} events): p = {s6['lrt_BGE_vs_BG']['p']:.3f}; Holm upper bound "
+          f"{s6['holm_provisional']['S6']['holm_adjusted_upper_bound']:.3f}; permutation p for the BGE AUROC = {s6['permutation']['p']:.3f}.",
+          f"- With each EEG feature detrended on trial index inside the training folds (a post-hoc check, Gate 6): BGE minus BG {d_['mean']:+.3f} [{d_['ci'][0]:+.3f}, {d_['ci'][1]:+.3f}].", "",
+          "**Selection.** The matched rows are not a random subset of the primary set:", "",
+          f"- {100 * cv['share_after_eeg_end']:.1f}% of the decision windows of the {cv['n_participants']} participants with a confirmed recording start after that recording ended; "
+          f"the median trial index is {cv['median_trial_usable']:.0f} for rows with usable EEG and {cv['median_trial_after_end']:.0f} for rows after the end.",
+          f"- Standardised mean difference in trial index, matched minus other primary rows: {tr['smd']:+.2f} [{tr['smd_ci'][0]:+.2f}, {tr['smd_ci'][1]:+.2f}].",
+          f"- Collection period differs between matched and other participants (Benjamini-Hochberg adjusted p = {per['fdr_bh']:.3f}) [CITE: Benjamini-Hochberg false discovery rate].",
+          f"- Matched and other primary rows share {cn['participants_in_both']} participants; outcome rates are {sel['outcome']['event_rate_matched']:.3f} (matched) and {sel['outcome']['event_rate_other']:.3f} (other).", "",
+          "**Reading.** Adding EEG to behaviour and gaze is associated with a small positive difference in AUROC whose interval includes zero, and the one contrast whose interval excludes zero "
+          "(BGE minus B) is exploratory and was not designated primary. With about 70 events the study cannot distinguish differences smaller than a few hundredths of AUROC, "
+          "so the result is **not established**, which is different from \"no effect\". Whether EEG adds information would need whole-session recordings and a pre-registered analysis; consumer-grade EEG "
+          "during driving and head movement is also exposed to motion and muscle artefacts [CITE: consumer EEG artefacts in mobile settings].", ""]
+    return md
+
+
+SECTIONS = [s1_audit, s2_h1, s3_ml, s4_eeg]
 
 
 def build(results_dir=None, out=None, audit=None):
