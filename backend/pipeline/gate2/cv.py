@@ -1,4 +1,4 @@
-"""Claim B machinery (Protocol v1 section 4): repeated stratified participant-grouped nested CV with a ridge
+﻿"""Claim B machinery (Protocol v1 section 4): repeated stratified participant-grouped nested CV with a ridge
 logistic learner and a fixed exposure offset, participant-level bootstrap, and participant-block permutation.
 
 All preprocessing (log1p, z-scoring), hyperparameter selection and any other fitted step happens inside the
@@ -8,7 +8,7 @@ import pandas as pd
 
 from . import mixed_logit as ml
 
-BINARY = {"incident_mode", "period_jun", "period_jul_aug", "ai_help_used"}
+BINARY = {"incident_mode", "period_jun", "period_jul_aug", "ai_help_used", "ai_help_early"}
 
 
 class Transformer:
