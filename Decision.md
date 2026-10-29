@@ -3363,3 +3363,38 @@ The remote will contain the rewritten history from D077 (hash map in `docs/audit
 
 ### Remarks
 Decision.md has two entries numbered D071 and two numbered D072; the duplicates are kept as written and noted here rather than renumbered.
+
+
+---
+
+## D080
+
+### Date
+2026-10-29
+
+### Decision
+Scored the Gate 5 consistency pass (5 seeds, temperature 0.3, 960 items per model), re-registered all five models, regenerated `results/master_table_gate5.md` and extended the Gate 5 report with section 8. No scoring rule was changed.
+
+### Context / Problem
+D072 and D079 left the consistency pass running. It finished for all five models (4,800 replies each).
+
+### Evidence
+Mean false-safe and false-warning over seeds are within about 0.02 of the temperature-0 values for every model and variant, with narrow ranges across seeds. Detection replies are identical across seeds for 0.82 to 1.00 of kiosks. gemma2 V1 is degenerate in 5 of 5 seeds (false-safe 0.993); no other model-variant is degenerate in any seed. mistral's file has 6,033 lines but 4,799 distinct item-seed pairs (1,234 duplicates from an interrupted and resumed run; `V1|recommendation|S001` seed 4 is absent); scoring keeps the first reply per pair (D076).
+
+### Alternatives Considered
+Rerun mistral's consistency pass to fill the missing pair; edit the raw reply file.
+
+### Why Alternatives Were Not Chosen
+A rerun at this point would add a reply obtained after seeing results, and raw reply logs are never edited. One missing pair of 4,800 is disclosed instead; its effect was not separately measured.
+
+### Implementation
+`python -m backend.pipeline.gate5.master_table5 register` then `table`. Registry rows `g5_slm_<model>_20261029_171424_*` are added beside the earlier accuracy-only rows (`..._151649_*`), which are kept. Latency and VRAM from this pass are not used (three parallel workers).
+
+### Status
+Complete for the accuracy and consistency passes. The malicious-override pass stays unscored until the user gives a go-ahead and a rule is fixed first. Gate 5 awaits the user's approval to move on.
+
+### Impact
+Conclusions of the Gate 5 report are unchanged: no model beats the best baseline, recommendation is at chance, and stability across seeds is not evidence of ability.
+
+### Remarks
+The push of `main` to GitHub is pending the user's own login; 53 commits were local at the time of writing.
