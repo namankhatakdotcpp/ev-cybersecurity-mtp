@@ -77,7 +77,16 @@ def parse_reply(reply, task, available, listed=(1, 2, 3)):
 
 def read_replies(step, model):
     f = SLM_DIR / step / (model.replace(":", "_") + ".jsonl")
-    return [json.loads(l) for l in open(f, encoding="utf-8")] if f.exists() else []
+    if not f.exists():
+        return []
+    seen, out = set(), []
+    for l in open(f, encoding="utf-8"):
+        r = json.loads(l)
+        if (r["key"], r["seed"]) in seen:      # D076: two harness processes appended to the same file; the first reply per (key, seed) is kept
+            continue
+        seen.add((r["key"], r["seed"]))
+        out.append(r)
+    return out
 
 
 def pilot_summary():

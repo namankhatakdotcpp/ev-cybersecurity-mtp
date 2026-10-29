@@ -3226,3 +3226,37 @@ None on earlier results.
 
 ### Remarks
 The RAG-contaminated-subset result (p = 0.019) is not pursued; it is a limitation and a hypothesis for new data.
+
+---
+
+## D076
+
+### Date
+2026-10-29
+
+### Decision
+Logged a deviation in the Gate 5 consistency pass: two harness processes wrote to the same files, producing duplicate (item, seed) rows. I stopped the single-worker process I had started; the three-worker process (`run_slm consistency all 3`, not started by me) continues. Scoring keeps the first reply per (key, seed) and discards later ones.
+
+### Context / Problem
+The consistency pass (temperature 0.3, seeds 1-5) was running as two processes at once. The resume logic reads the set of finished items only at start, so both processes appended replies for the same items.
+
+### Evidence
+For mistral at the time of detection: 4,413 distinct (item, seed) pairs in 5,609 rows; 1,206 pairs were duplicated, 1,159 of them (96%) with identical replies and 47 with different replies. The accuracy pass (temperature 0, single process) has no duplicates. Concurrent processes also change per-call latency, so latency from the consistency pass is not reported; Table 7 uses the accuracy pass only.
+
+### Alternatives Considered
+(a) Keep both replies and score all; (b) keep the last reply; (c) discard the pass and restart.
+
+### Why Alternatives Were Not Chosen
+(a) double-counts items and (b) would favour whichever process ran later; first-by-file-order is a rule fixed without reference to reply content. (c) wastes the completed items, and 96% of duplicates are identical anyway.
+
+### Implementation
+`score_slm.read_replies` drops later rows with the same (key, seed). The rule was set before consistency replies were scored. The raw files keep every row.
+
+### Status
+Open until the pass finishes; then the consistency tables are generated and the Gate 5 report is extended.
+
+### Impact
+Consistency agreement figures may differ slightly from a clean single-process run (about 4% of duplicated items had differing replies, which shows run-to-run non-determinism under concurrent load).
+
+### Remarks
+None.
