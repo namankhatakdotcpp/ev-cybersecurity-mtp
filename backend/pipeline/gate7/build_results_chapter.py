@@ -81,6 +81,7 @@ def s2_h1(c):
     d = b["delta_auroc"]["BG_minus_B"]
     m = b["metrics"]
     sens = a["sensitivity"]
+    lower = all(x.get("sigma_at_lower_bound") for x in [pa, *(v for v in sens.values() if isinstance(v, dict))])
     rows = [["Primary set", pa["n_rows"], pa["n_participants"], pa["n_events"], f"{pa['lrt']['stat']:.2f}", f"{pa['lrt']['p']:.3f}"]]
     for key, lab in (("E2_drop_duplicate_folder_participants", "Participants with more than one session folder removed (E2)"),
                      ("S4_at_least_200_valid_gaze_samples", "At least 200 valid gaze samples in the window (S4)"),
@@ -99,8 +100,9 @@ def s2_h1(c):
           "Pre-specified sensitivity analyses (likelihood-ratio test of the same six gaze features):", "",
           *table(["Subset", "Rows", "Participants", "Events", "LRT chi-square", "p"], rows), "",
           "The subset without contaminated assistant memory has fewer rows, a higher test statistic and a smaller p-value than the primary analysis. This is one of three pre-specified "
-          "sensitivity analyses, it is not corrected for multiple comparisons, and the primary analysis includes the subset's complement; it is reported as a hypothesis for new data, "
-          "not as a finding. The random-intercept variance estimate is at its lower bound in these fits, so the models are close to ordinary logistic regression.", ""]
+          "sensitivity analyses and is not corrected for multiple comparisons; it is reported as a hypothesis for new data, not as a finding. "
+          + ("In every one of these fits the random-intercept variance estimate is at its lower bound, so the models are close to ordinary logistic regression." if lower else
+             "The random-intercept variance estimate is above its lower bound in some of these fits."), ""]
     return md
 
 

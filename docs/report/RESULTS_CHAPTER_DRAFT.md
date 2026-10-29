@@ -48,7 +48,7 @@ Pre-specified sensitivity analyses (likelihood-ratio test of the same six gaze f
 | At least 200 valid gaze samples in the window (S4) | 490 | 112 | 220 | 6.89 | 0.331 |
 | Sessions with a contaminated assistant memory removed (S3) | 314 | 77 | 143 | 15.12 | 0.019 |
 
-The subset without contaminated assistant memory has fewer rows, a higher test statistic and a smaller p-value than the primary analysis. This is one of three pre-specified sensitivity analyses, it is not corrected for multiple comparisons, and the primary analysis includes the subset's complement; it is reported as a hypothesis for new data, not as a finding. The random-intercept variance estimate is at its lower bound in these fits, so the models are close to ordinary logistic regression.
+The subset without contaminated assistant memory has fewer rows, a higher test statistic and a smaller p-value than the primary analysis. This is one of three pre-specified sensitivity analyses and is not corrected for multiple comparisons; it is reported as a hypothesis for new data, not as a finding. In every one of these fits the random-intercept variance estimate is at its lower bound, so the models are close to ordinary logistic regression.
 
 
 ## Citation placeholders
