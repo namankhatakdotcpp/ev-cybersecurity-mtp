@@ -1,0 +1,183 @@
+{
+ "experiment_id": "h1_claim_b_20261029_135319_404947",
+ "timestamp": "2026-10-29T13:53:19",
+ "protocol_version": "v1",
+ "protocol_commit": "58e59c0e5fd2dc1cdd647336363984f349457ec7",
+ "dataset_version": "4788b35f9785821f27723aee2cb6103bfb096c7a03c64b02102fafa12a3e4d25",
+ "feature_version": "161577aecc0b96dcfa593733008865a85dc9ea5a79aa5a7de0bf6ab056867654",
+ "label_version": "T1-v1",
+ "split_scheme": "5x20 repeated participant-grouped nested CV (stratified by participant event-rate tertile)",
+ "seed": "[1101, 1102, 1103, 1104, 1105, 1106, 1107, 1108, 1109, 1110, 1111, 1112, 1113, 1114, 1115, 1116, 1117, 1118, 1119, 1120]",
+ "model": "ridge logistic with offset (C grid, inner 3-fold log-loss)",
+ "hyperparameters": {
+  "learner": "ridge_logistic_with_offset",
+  "C_grid": [
+   0.01,
+   0.1,
+   1.0,
+   10.0
+  ],
+  "inner_selection": "log_loss",
+  "outer_folds": 5,
+  "outer_repeats": 20,
+  "inner_folds": 3,
+  "repeat_seeds": [
+   1101,
+   1102,
+   1103,
+   1104,
+   1105,
+   1106,
+   1107,
+   1108,
+   1109,
+   1110,
+   1111,
+   1112,
+   1113,
+   1114,
+   1115,
+   1116,
+   1117,
+   1118,
+   1119,
+   1120
+  ],
+  "inner_seed_offset": 5000,
+  "strata": "participant_event_rate_tertile",
+  "bootstrap_resamples": 2000,
+  "bootstrap_seed": 4242,
+  "permutation_lrt": 1000,
+  "permutation_cv": 200,
+  "permutation_seed": 7070,
+  "permutation_strata": [
+   "incident_mode",
+   "period",
+   "n_rows"
+  ]
+ },
+ "environment": "python 3.10.0rc2; Windows 10; numpy 2.2.6; scipy 1.15.3; pandas 2.3.3; scikit-learn 1.7.2; statsmodels 0.15.0",
+ "git_commit": "5672700db4149e624c85d23066b3d8aa412a5cdf",
+ "metrics": {
+  "n_rows": 492,
+  "n_participants": 112,
+  "n_events": 220,
+  "metrics": {
+   "B0": {
+    "auroc": 0.6270437834224597,
+    "ap": 0.5546225976874983,
+    "brier": 0.22953985724122875,
+    "auroc_ci": [
+     0.5692210750854527,
+     0.6811257598863323
+    ],
+    "ap_ci": [
+     0.4842420707198984,
+     0.6310798574896369
+    ],
+    "brier_ci": [
+     0.21719965979063252,
+     0.24212113892487144
+    ]
+   },
+   "B": {
+    "auroc": 0.6261823195187165,
+    "ap": 0.5505237078567097,
+    "brier": 0.23051197184440425,
+    "auroc_ci": [
+     0.5685841958479771,
+     0.678744139855417
+    ],
+    "ap_ci": [
+     0.4820120998092069,
+     0.6281628315853495
+    ],
+    "brier_ci": [
+     0.21800064962018947,
+     0.24311328041406433
+    ]
+   },
+   "BG": {
+    "auroc": 0.6308188502673797,
+    "ap": 0.5676197838184713,
+    "brier": 0.23139292921964594,
+    "auroc_ci": [
+     0.5740801399058642,
+     0.6840987753943082
+    ],
+    "ap_ci": [
+     0.49590388400310054,
+     0.6415547706324551
+    ],
+    "brier_ci": [
+     0.21874770804902094,
+     0.24407670609986848
+    ]
+   }
+  },
+  "delta_auroc": {
+   "BG_minus_B": {
+    "point": 0.004636530748663215,
+    "ci": [
+     -0.006304778023173796,
+     0.01507364906969666
+    ],
+    "bootstrap_se": 0.0053846401606004604,
+    "prop_boot_leq_0": 0.217
+   },
+   "BG_minus_B0": {
+    "point": 0.0037750668449200164,
+    "ci": [
+     -0.00748094712905259,
+     0.015137150414803291
+    ],
+    "bootstrap_se": 0.005805712484047495,
+    "prop_boot_leq_0": 0.266
+   },
+   "B_minus_B0": {
+    "point": -0.0008614639037431981,
+    "ci": [
+     -0.009465275337613294,
+     0.008918265302031112
+    ],
+    "bootstrap_se": 0.004775103301439045,
+    "prop_boot_leq_0": 0.556
+   }
+  },
+  "per_repeat_delta_auroc": {
+   "mean": 0.004636530748663115,
+   "sd": 0.0044432595377946514,
+   "min": -0.006333556149732633,
+   "max": 0.013736631016042722
+  },
+  "permutation": {
+   "B": 200,
+   "observed_auc_BG": 0.6308188502673797,
+   "auc_B": 0.6261823195187165,
+   "p_auc_BG_ge_obs": 0.4925373134328358,
+   "perm_auc_BG_mean": 0.6315427347927806,
+   "perm_auc_BG_q95": 0.6459984124331549,
+   "perm_delta_mean": 0.005360415274064246
+  },
+  "chosen_C_counts": {
+   "B": {
+    "0.01": 95,
+    "0.1": 2,
+    "1.0": 3
+   },
+   "B0": {
+    "0.01": 99,
+    "0.1": 1,
+    "1.0": 0
+   },
+   "BG": {
+    "0.01": 95,
+    "0.1": 4,
+    "1.0": 1
+   }
+  }
+ },
+ "artifact_paths": "[]",
+ "status": "completed",
+ "notes": "Claim B companion estimate: paired delta AUROC B+G minus B, participant bootstrap, participant-block permutation"
+}
