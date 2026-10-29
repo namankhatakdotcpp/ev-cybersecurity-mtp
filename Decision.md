@@ -3433,3 +3433,38 @@ The claims register fixes what the final report may say. The malicious pass must
 
 ### Remarks
 The outline is a working document and may change when the open items are resolved.
+
+
+---
+
+## D082
+
+### Date
+2026-10-29
+
+### Decision
+Gate 7 executed: the final results report is generated from the registry by `backend/pipeline/gate7/build_final_report.py` into `docs/report/FINAL_REPORT.md`, and the four selections of Protocol v1 section 12 are applied mechanically.
+
+### Context / Problem
+Protocol section 13 requires that no number in a report is typed by hand. The user approved Gate 7 after the results outline (D081).
+
+### Evidence
+The generator reads only `results/registry.csv` and the per-run `summary.json` files. Numbers spot-checked against the Gate 2 to Gate 6 reports match (H1 LRT 8.17, p 0.226; AUROC gain +0.005; ridge B0 0.627; BGE minus BG +0.031; 41.1% of windows after the EEG recording ended). Pipeline tests: 43 passed, including the guard test for private strings.
+
+### Alternatives Considered
+Write the report by hand from the earlier reports; select the SLM on V1 instead of V2.
+
+### Why Alternatives Were Not Chosen
+Hand copying breaks the protocol rule. The SLM selection uses the pre-committed V2 headline (label-flagged kiosks excluded); the V1 result is printed beside it.
+
+### Implementation
+Rubric results as generated. (1) Highest AUROC is ridge with gaze (0.633), but all 12 model-set pairs overlap its CI, so the tie rule selects ridge on the exposure-only set B0 (0.627). (2) Safety: boosting B0 has the nominal lowest false-safe at the recall-0.80 point among models with calibration slope in [0.7, 1.3], but 8 eligible pairs are within 0.01 of it, so it is not a separated winner and the false-warning rate is 0.62. (3) Deployment: ridge B0, which is the exposure baseline; latency was not measured for the ML models. (4) SLM: gemma2:9b on V2 (false-safe 0.33, false-warning 0.74), qwen2.5:7b on V1; the variant changes the selection, so no ranking is claimed. Best overall system withheld. Choices made by me and not specified in the protocol: tie order (fewer feature blocks, then ridge before boosting before forest), the one-standard-error estimate as CI width / 3.92, and excluding degenerate SLMs from selection.
+
+### Status
+Complete. The malicious-override pass remains unscored. The Word progress report in `docs/report/` is not regenerated.
+
+### Impact
+The final report states that no model beats the exposure-only baseline and that no SLM beats the best simple reference. All claims are associational.
+
+### Remarks
+The generator has no unit test of its own; it was checked against the earlier reports. Push of `main` is still pending the user's own login.
