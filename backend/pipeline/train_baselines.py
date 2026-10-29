@@ -25,6 +25,8 @@ unchanged since the original pipeline brief.
 Per-phase gate (Phase 4 brief): MLP proceeds only if it beats this baseline on
 held-out participants; this script only runs Phase A.
 """
+import os
+
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
@@ -41,7 +43,10 @@ try:
 except ImportError:
     HAVE_XGB = False
 
-FEATURE_TABLE = "/Users/naman/Documents/MTP/backend/pipeline/feature_table.csv"
+# Directory holding feature_table.csv and where results are written. Defaults to
+# this file's own directory; override with EV_PIPELINE_DIR.
+PIPELINE_DIR = os.environ.get("EV_PIPELINE_DIR", os.path.dirname(os.path.abspath(__file__)))
+FEATURE_TABLE = os.path.join(PIPELINE_DIR, "feature_table.csv")
 N_FOLDS = 5
 RANDOM_STATE = 42
 
@@ -185,7 +190,7 @@ def main():
     results = run_ablation(df, "Phase 4A: classical baselines, modality ablation", feature_sets)
 
     out = pd.DataFrame(results)
-    out_path = "/Users/naman/Documents/MTP/backend/pipeline/phase4a_ablation_results.csv"
+    out_path = os.path.join(PIPELINE_DIR, "phase4a_ablation_results.csv")
     out.to_csv(out_path, index=False)
     print(f"\n\nWrote ablation results to {out_path}")
     print(out.to_string(index=False) if len(out) else "No results produced.")

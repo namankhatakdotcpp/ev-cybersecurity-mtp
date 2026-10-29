@@ -43,6 +43,7 @@ Run: /usr/bin/python3 compare_slm_classifiers.py [--n-rows N] [--save]
 """
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -58,13 +59,13 @@ from sklearn.metrics import balanced_accuracy_score, f1_score, roc_auc_score
 from sklearn.model_selection import GroupKFold
 from sklearn.preprocessing import StandardScaler
 
-from train_baselines import FEATURE_TABLE, BEHAV_COLS, GAZE_COLS, make_label, RANDOM_STATE
+from train_baselines import FEATURE_TABLE, PIPELINE_DIR, BEHAV_COLS, GAZE_COLS, make_label, RANDOM_STATE
 
 FEATURE_COLS = [c for c in BEHAV_COLS if c != "rag_contaminated"] + GAZE_COLS
 N_FOLDS = 5
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODELS = ["mistral:7b-instruct", "llama3.1:8b", "phi3:3.8b", "gemma2:9b", "qwen2.5:7b"]
-RESULTS_PATH = "/Users/naman/Documents/MTP/backend/pipeline/model/slm_comparison_results.json"
+RESULTS_PATH = os.path.join(PIPELINE_DIR, "model", "slm_comparison_results.json")
 
 PROMPT_TEMPLATE = """You are a binary risk classifier for a VR EV-charging cybersecurity study. Given these session features, predict whether the driver charged at a COMPROMISED (risky) kiosk.
 
