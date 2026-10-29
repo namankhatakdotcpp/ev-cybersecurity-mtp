@@ -176,8 +176,8 @@ def s4_eeg(c):
           f"- Collection period differs between matched and other participants (Benjamini-Hochberg adjusted p = {per['fdr_bh']:.3f}) [CITE: Benjamini-Hochberg false discovery rate].",
           f"- Matched and other primary rows share {cn['participants_in_both']} participants; outcome rates are {sel['outcome']['event_rate_matched']:.3f} (matched) and {sel['outcome']['event_rate_other']:.3f} (other).", "",
           "**Reading.** Adding EEG to behaviour and gaze is associated with a small positive difference in AUROC whose interval includes zero, and the one contrast whose interval excludes zero "
-          "(BGE minus B) is exploratory and was not designated primary. With about 70 events the study cannot distinguish differences smaller than a few hundredths of AUROC, "
-          "so the result is **not established**, which is different from \"no effect\". Whether EEG adds information would need whole-session recordings and a pre-registered analysis; consumer-grade EEG "
+          "(BGE minus B) is exploratory and was not designated primary. With " + str(s6["n_events"]) + f" events the bootstrap standard error of the primary contrast is {s6['paired']['BGE_minus_BG']['auroc']['se']:.3f}, "
+          "so differences of a few hundredths of AUROC cannot be told apart from zero and the result is **not established**, which is different from \"no effect\". Whether EEG adds information would need whole-session recordings and a pre-registered analysis; consumer-grade EEG "
           "during driving and head movement is also exposed to motion and muscle artefacts [CITE: consumer EEG artefacts in mobile settings].", ""]
     return md
 

@@ -115,7 +115,7 @@ EEG was never a primary question. The four-channel consumer headset gives a mini
 - Collection period differs between matched and other participants (Benjamini-Hochberg adjusted p = 0.012) [CITE: Benjamini-Hochberg false discovery rate].
 - Matched and other primary rows share 21 participants; outcome rates are 0.467 (matched) and 0.439 (other).
 
-**Reading.** Adding EEG to behaviour and gaze is associated with a small positive difference in AUROC whose interval includes zero, and the one contrast whose interval excludes zero (BGE minus B) is exploratory and was not designated primary. With about 70 events the study cannot distinguish differences smaller than a few hundredths of AUROC, so the result is **not established**, which is different from "no effect". Whether EEG adds information would need whole-session recordings and a pre-registered analysis; consumer-grade EEG during driving and head movement is also exposed to motion and muscle artefacts [CITE: consumer EEG artefacts in mobile settings].
+**Reading.** Adding EEG to behaviour and gaze is associated with a small positive difference in AUROC whose interval includes zero, and the one contrast whose interval excludes zero (BGE minus B) is exploratory and was not designated primary. With 70 events the bootstrap standard error of the primary contrast is 0.020, so differences of a few hundredths of AUROC cannot be told apart from zero and the result is **not established**, which is different from "no effect". Whether EEG adds information would need whole-session recordings and a pre-registered analysis; consumer-grade EEG during driving and head movement is also exposed to motion and muscle artefacts [CITE: consumer EEG artefacts in mobile settings].
 
 
 ## Citation placeholders
