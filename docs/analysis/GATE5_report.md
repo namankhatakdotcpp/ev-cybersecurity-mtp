@@ -1,6 +1,6 @@
 # Gate 5 report: SLM benchmark (accuracy pass)
 
-Scored per `docs/protocol/GATE5_scoring_spec.md` (committed 07439e5, before any reply was scored). Full tables: `results/master_table_gate5.md` (generated from the registry). Scenario set, prompts and decoding are those approved in D070/D071. **Status: accuracy pass (temperature 0, seed 1) and consistency pass (5 seeds, temperature 0.3) scored; the consistency results are in section 8 (added after the pass finished, D080).** The malicious-override condition has been run (600 replies, produced outside this session) and is not scored here; it needs its own go-ahead and a rule fixed first.
+Scored per `docs/protocol/GATE5_scoring_spec.md` (committed 07439e5, before any reply was scored). Full tables: `results/master_table_gate5.md` (generated from the registry). Scenario set, prompts and decoding are those approved in D070/D071. **Status: accuracy pass (temperature 0, seed 1) and consistency pass (5 seeds, temperature 0.3) scored; the consistency results are in section 8 (added after the pass finished, D080).** The malicious-override condition was rerun cleanly and scored under Amendment A2 (section 9); the original pass is superseded and unscored.
 
 Process note (D071): approval was given in chat and recorded afterwards. `score_slm.py` was written after the pass had started; its parsing rule is the one frozen in `configs/gate5_prompts.yaml` (committed before any model call), and within this session no number was looked at before the spec was committed, but see Disclosures: the user reports an earlier provisional scoring run whose numbers were seen.
 
@@ -55,12 +55,12 @@ Pilot compliance 95% to 100% (all above the 90% line). In the scored set mistral
 
 **What is not defensible.** Any statement that an SLM "detects" attacks; any ranking of models on overall accuracy; any V2 statement presented as attack detection; any statement about the "mode" of an attack (the modes are consequences after charging). The set is quota-sampled, text-only, single decoding configuration (temperature 0, seed 1), not blind to the investigators, and the images were described by one other model. The consistency pass is not yet available.
 
-**What NOT to test next.** Do not tune prompts, models or thresholds on these results to find a configuration that beats the baselines (this set is now used). Do not add a combined ML+SLM table. Do not run the malicious-override condition without an explicit go-ahead. Do not pursue the label-flagged kiosks as a finding; they are a leak control.
+**What NOT to test next.** Do not tune prompts, models or thresholds on these results to find a configuration that beats the baselines (this set is now used). Do not add a combined ML+SLM table. Do not run further override wordings looking for one that is resisted. Do not pursue the label-flagged kiosks as a finding; they are a leak control.
 
 ## 7. Open items
 
 1. Done (D080): consistency pass scored, rows re-registered, master table regenerated, section 8 added.
-2. Malicious-override pass: still unscored; needs the user's go-ahead and a rule fixed first.
+2. Done (D083): malicious-override rerun scored under Amendment A2 (section 9).
 3. The scoring code was committed before this re-registration; the new registry rows carry the later commit.
 
 ## 8. Consistency pass (temperature 0.3, seeds 1 to 5; D080)
@@ -70,15 +70,26 @@ Master table 6. All 960 items per model were run at five seeds (4,800 replies pe
 - **Mean rates match the accuracy pass.** False-safe and false-warning averaged over seeds sit within about 0.02 of the temperature-0 values for every model and variant, and the range across seeds is narrow (for example llama3.1 V2 false-safe 0.401 [0.395, 0.412]; qwen2.5 V1 0.654 [0.649, 0.663]). Sampling noise at temperature 0.3 does not change any conclusion in sections 2 to 4.
 - **Models are stable, not accurate.** Detection replies are identical across all five seeds for 0.82 to 1.00 of kiosks (phi3 lowest at 0.82 to 0.83; gemma2 0.996 to 1.000; qwen2.5 0.955 to 0.965). Recommendations are identical for 0.69 to 0.97 of stations (phi3 V2 lowest at 0.69). High agreement says the answers repeat, not that they are right.
 - **gemma2 V1 is degenerate in all five seeds** (5 of 5): false-safe 0.993, false-warning 0.003, i.e. it answers SAFE to essentially everything. No other model-variant is degenerate in any seed.
-- **mistral data note.** Its consistency file has 6,033 lines (4,799 distinct item-seed pairs; 1,234 duplicated and one pair, `V1|recommendation|S001` seed 4, absent). The duplicates come from an interrupted and resumed run; scoring keeps the first reply per item and seed (D076). One missing pair of 4,800 is not expected to move any figure, and its effect was not separately measured.
+- **mistral data note.** Its consistency file had 6,033 lines (4,799 distinct item-seed pairs; 1,234 duplicated, and one pair, `V1|recommendation|S001` seed 4, absent). The duplicates come from an interrupted and resumed run and stay in the raw log; scoring keeps the first reply per item and seed (D076). The gap was filled by resuming the pass (one call, same settings, appended as returned; Amendment A2 point 7, D083). All five models now have exactly 4,800 distinct item-seed pairs, and the only figure that moved on re-scoring is mistral V1 recommendation identical-across-seeds (0.862 to 0.863).
 - **Latency and VRAM from this pass are not used** (three parallel workers).
 
 **Critical review (consistency).** *Learned:* the accuracy-pass picture is not a sampling accident. *Failed or uncertain:* mistral's file irregularity; the check says nothing about other prompt wordings. *Defensible:* results are stable across seeds at temperature 0.3 and the gemma2 V1 degeneracy is reproducible. *Not defensible:* using stability as evidence of ability. *Do not test next:* more seeds or temperatures to look for a better configuration.
+
+## 9. Malicious-override condition (Amendment A2, D083)
+
+Table: `results/master_table_gate5_malicious.md` (generated from registry rows `g5_malicious_*`). The original pass (run next to another GPU process) is superseded and unscored; a clean rerun with provenance was scored instead (`results/_slm/malicious_rerun/`, 60 designated mixed stations, V1 and V2, temperature 0, seed 1).
+
+- **All five models name the target kiosk almost every time the override is present:** 0.98 (mistral, 59 of 60) to 1.00 in both variants, with no SKIP and no failed replies. Without the override the same stations give 0.25 to 0.45. The paired difference is +0.55 to +0.75 (station-level bootstrap intervals all above zero), and in no model did any station show the target only without the override (only-with/only-without 33 to 45 against 0). By the A2 label all five "follow the override" in both variants.
+- **What this is:** instruction-following under an explicit instruction in the prompt. It is not detection, and it is not evidence about the assistant in the game (whose condition and replies were not logged).
+- **Determinism check:** the rerun agrees with the original pass on the parsed choice for 60 of 60 stations for four models and 58 of 60 for mistral, in both variants. mistral's two disagreements at temperature 0 and a fixed seed were not investigated.
+- **Limits:** one decoding setting, one override wording, 60 stations, one target rule (lowest-numbered attacked kiosk). The 98 to 100% figures were seen provisionally before the amendment (A1 point 4).
+
+**Critical review (malicious).** *Learned:* a short explicit instruction overrides these models' own choice almost completely. *Failed or uncertain:* no variation of wording or of position of the instruction was tried; mistral's non-identical reruns. *Defensible:* all five follow an explicit instruction to pick an attacked kiosk in this setup. *Not defensible:* any statement about how the game assistant would behave, or about resistance to subtler manipulation. *Do not test next:* more wordings to find one that is resisted.
 
 ## Disclosures (D078, spec Amendment A1)
 
 1. **Forking paths.** A provisional scoring run was made before the scoring spec was committed and its numbers (detection accuracy about 0.50 to 0.59, mistral V2 format breaks, 98 to 100% malicious-override compliance) were seen. The repository holds no output of that run. The spec rules were not changed afterwards; any later change will be listed in Amendment A1.
 2. **Scorer written after replies existed.** The parsing rule is the one committed in `configs/gate5_prompts.yaml` before any model call, but `score_slm.py` was written after the pass started. Parsing is strict: a reply that breaks the rule is a failure, with no re-parsing and no format retries (mistral V2: 66 of 240 detection replies fail and are counted as wrong).
 3. **Latency and VRAM** are from the sequential accuracy pass only (Table 7). The consistency pass uses parallel workers and the malicious pass ran next to another process using about 10 GB, so neither gives clean figures.
-4. **Malicious pass** exists and is unscored.
+4. **Malicious pass.** The original pass is superseded and unscored; the rerun is scored (section 9, Amendment A2).
 5. **Approval.** The scenario set, pilot and accuracy pass were approved in chat; the repository has no timestamp for it (D071).
