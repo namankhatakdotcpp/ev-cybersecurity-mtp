@@ -2688,3 +2688,55 @@ D026/D030: the plausible-looking pinhole parameters and the 021 result (0.49 on 
 
 ### Remarks
 For new collection (Objective 3), a short calibration step at the start of each session (looking at, and clicking, known on-screen targets) would give a camera model the data it needs; this would be cheap with the video capture already running. The 021 result is worth recording as a lead, not a finding.
+
+
+---
+
+## D063
+
+### Date
+2026-10-29
+
+### Decision
+Ran the SLM-vs-ML risk-classification comparison (D058's script, `backend/pipeline/compare_slm_classifiers.py`, unmodified) for real on the lab workstation: five local SLMs via Ollama, zero-shot, on held-out GroupKFold fold 0. **No SLM clearly beats the same-fold random forest, and four of the five produce outputs that look close to constant.** This is a single fold with no confidence intervals, so it is a first look, not a ranking.
+
+### Context / Problem
+D058 deferred this comparison to the lab PC (GPU, no API quota) and left it as Not Started: the script had only been smoke-tested on 5 rows with one model.
+
+### Evidence
+**Setup.** RTX 4090, Ollama 0.40.10; `ollama ps` showed `100% GPU` for the model in use, and each model took about 8 minutes (468-510 s) for 212 rows. Models: `mistral:7b-instruct`, `llama3.1:8b`, `phi3:3.8b`, `gemma2:9b`, `qwen2.5:7b`. Fold 0: 212 test rows, 25 participants, risky rate 0.425. No row failed to parse (parse failure rate 0.0 for every model, all 212 scored). The repo scripts hardcode Mac paths for the feature table and results file, so the run used a wrapper outside the repo that overrides both paths; no repo file was edited for the run. Results were saved outside the repo (`D:\MTP_scratch\slm_comparison_results.json`).
+
+| Model | Balanced accuracy | F1 |
+|---|---|---|
+| RandomForest, same fold (fresh fit on the other 4 folds) | 0.5818 (AUROC 0.6948) | 0.4118 |
+| Majority-class baseline | 0.5000 | 0.0000 |
+| `llama3.1:8b` | 0.5595 | 0.4606 |
+| `phi3:3.8b` | 0.5190 | 0.6034 |
+| `qwen2.5:7b` | 0.5029 | 0.0426 |
+| `mistral:7b-instruct` | 0.5000 | 0.5960 |
+| `gemma2:9b` | 0.5000 | 0.0000 |
+
+**Near-constant outputs (inferred from the metrics; per-row predictions were not saved).** At a risky rate of 0.425, answering "risky" every time gives F1 of about 0.597 and balanced accuracy 0.5; `mistral` (0.5000 / 0.5960) and `phi3` (0.5190 / 0.6034) sit at or very near that point. `gemma2` (0.5000 / 0.0000) matches always answering "not risky", and `qwen2.5` (0.5029 / 0.0426) is almost that. `llama3.1` is the only model that does not look constant (F1 0.4606, below the all-risky value) and has the highest SLM balanced accuracy, 0.5595.
+
+**How much 0.5595 means.** With 212 rows from 25 participants and no interval reported, 0.5595 versus 0.50 is within the noise to be expected from a single fold; the script reports no standard error, and none was computed here. The forest's 0.5818 is likewise one fold and sits within this project's earlier cross-fold spread (D050's 5-fold figures, not restated here).
+
+### Reason
+The point of the run was to see whether zero-shot SLMs, given the same features, can substitute for or compete with the deployed ML model on identical held-out rows. On this fold they do not, and most appear not to be using the features at all.
+
+### Alternatives Considered
+(a) Report llama3.1's 0.5595 as the best SLM and move on. (b) Re-run on all five folds before logging anything. (c) Add few-shot examples or reasoning prompts to coax discrimination out of the models.
+
+### Why Alternatives Were Not Chosen
+(a) would imply a ranking one fold cannot support. (b) is a reasonable next step but a larger run (about 40 minutes per fold) than this task asked for. (c) departs from the script's deliberate "simplest possible prompt" design (D058), so a result would no longer be comparable to what D058 specified.
+
+### Implementation
+No repo code changed by the run. This entry only. (The hardcoded-path fix is a separate commit.)
+
+### Status
+Verified for what was run: fold 0, one zero-shot prompt per model, 212 rows each. Not established: any ranking among the SLMs, any comparison across folds, any statement about few-shot or fine-tuned SLMs. The near-constant behaviour is inferred from summary metrics, not observed in saved predictions.
+
+### Impact
+Objective 2 (the SLM comparison table requested in D058): first real numbers now exist, with the caveats above. Does not change the production design: the SLM still only phrases a decision the ML model makes (D055/D057). Does not change D050's cross-fold baseline or D057's calibrated thresholds.
+
+### Remarks
+To make this comparison citable: save per-row predictions, run all five folds, report intervals, and add the positive-prediction rate per model so near-constant behaviour is visible directly. The video-feature extension noted in D058 does not exist yet (D059-D062 found the video usable but not for AOI mapping).
