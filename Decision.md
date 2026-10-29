@@ -3569,3 +3569,6 @@ None on any result. D083's remark that the Word report is not regenerated is out
 
 ### Remarks
 Commits are local only; the user pushes `main` from their own terminal.
+
+### Correction (same day)
+The Evidence paragraph above says the registry holds 33 rows; it holds 35 (verified by reading `results/registry.csv`), including 5 `g5_malicious_*` and 15 `g5_slm_*` rows as stated.
