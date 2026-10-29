@@ -3605,3 +3605,36 @@ None on any result. The status report estimates are judgement, not measurements.
 
 ### Remarks
 The chapter contains some static sentences that state a result qualitatively (listed in the chapter's critical-review note); they would not update if the registry changed.
+
+
+## D087
+
+### Date
+2026-10-29
+
+### Decision
+Prepared the FPS measurement (Objective 1) without measuring: a protocol, an analysis script with synthetic-data tests, and an empty results template. The user runs the measurement on the lab workstation.
+
+### Context / Problem
+D004 left the before/after FPS measurement for the Windows workstation, and `FPS_Update_Measurement_TODO.docx` listed three settings, two in-game settings and a six-run table, but no per-frame metrics, order or acceptance reading.
+
+### Evidence
+`docs/fps/FPS_MEASUREMENT_PROTOCOL.md`, `docs/fps/FPS_RESULTS_TEMPLATE.md`, `backend/fps/analyze_frametimes.py` and `backend/fps/tests/` (13 tests, synthetic data only). No measured value exists in the repository.
+
+### Alternatives Considered
+Keep the TODO document's three runs per configuration and 30 s stationary capture; report only average and minimum FPS.
+
+### Why Alternatives Were Not Chosen
+Three repeats give a range only, 30 s gives about 2,700 frames so the 0.1% low rests on about 3 frames, and average and minimum FPS hide late frames; the target is a steady 90 Hz, so the share of frames over the 11.11 ms budget is the more relevant measure. The protocol therefore uses 5 repeats, a 20 s settle and a 120 s capture, randomised block order, and labelled conditions (C0 baseline, C5 all changes, optional C1 to C4). These values are my choices, not the supervisor's.
+
+### Implementation
+The script reads a run manifest and PresentMon-style frame-time CSVs and reports mean FPS, 1% and 0.1% lows, frame-time percentiles, over-budget and severe-late shares, dropped frames and the TODO table's minimum FPS; it also generates a blocked random run order.
+
+### Status
+Prepared, not executed. Open: the threshold for "meets the target" (to be set before looking at results), whether PresentMon attaches to BeamNG in VR mode on the lab PC, where raw logs may be stored.
+
+### Impact
+None on any result. No FPS claim may be made until the template is filled from real logs.
+
+### Remarks
+Commits are local only.
