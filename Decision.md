@@ -3572,3 +3572,36 @@ Commits are local only; the user pushes `main` from their own terminal.
 
 ### Correction (same day)
 The Evidence paragraph above says the registry holds 33 rows; it holds 35 (verified by reading `results/registry.csv`), including 5 `g5_malicious_*` and 15 `g5_slm_*` rows as stated.
+
+
+## D086
+
+### Date
+2026-10-29
+
+### Decision
+Steps 0 to 3 of the remaining-work brief, documents and a generator only: reconciled the earlier status report with the repository, documented the EEG cohort funnel, wrote a new dated status report, and generated a results-chapter draft from the registry. No inclusion rule, matched set, registry row or earlier result was changed, and S6 was not re-run.
+
+### Context / Problem
+The earlier status report (kept outside the repository) listed the analyses as not done; the EEG cohort numbers in it (67 verified, 76 decoded) did not match the pipeline (49 participants in the matched set); the results chapter had only an outline.
+
+### Evidence
+`docs/audit/STATUS_RECONCILIATION.md`; `docs/audit/EEG_COHORT_FUNNEL.md` and `backend/pipeline/gate2/eeg_funnel.py` (67 quality-screened participants, 58 with an EEG window, 52 with a primary-set row, 49 matched; "67 verified" in the old report is the quality-screened count, 69 are verified); `docs/report/STATUS_REPORT_2026-10-29.md`; `backend/pipeline/gate7/build_results_chapter.py`, its frozen-fixture test, and the generated `docs/report/RESULTS_CHAPTER_DRAFT.md`. 52 tests pass under `backend/pipeline`.
+
+### Alternatives Considered
+Edit the old status report; type the chapter tables by hand.
+
+### Why Alternatives Were Not Chosen
+The old report is outside the repository; hand-typed numbers would not be traceable to the registry. The Gate 0 audit figures, which predate the registry, are parsed from `docs/audit/GATE0_audit.md` instead.
+
+### Implementation
+The chapter generator reads only the registry, the run folders and the Gate 0 audit file; its test checks a frozen checksum, determinism, that a changed registry value changes the chapter, that audit figures come from the audit file, and that no causal wording appears. Citations are `[CITE: ...]` placeholders listed at the end of the chapter.
+
+### Status
+Complete for Steps 0 to 3. Not done: Step 4 (FPS protocol), Step 5 (path refactor, waits for approval), the lab's answer on the missing session log for one EEG recording.
+
+### Impact
+None on any result. The status report estimates are judgement, not measurements.
+
+### Remarks
+The chapter contains some static sentences that state a result qualitatively (listed in the chapter's critical-review note); they would not update if the registry changed.
