@@ -2810,3 +2810,38 @@ Replaces the legacy target as the primary one for Gates 2-7 if approved. Does no
 
 ### Remarks
 The protocol is not blind: the redefinition and the primary test were chosen after Gate 0 showed near-chance gaze signal among charges. All existing-data results will be labelled exploratory with respect to that choice; only new data could be confirmatory.
+
+
+---
+
+## D066
+
+### Date
+2026-10-29
+
+### Decision
+Froze Protocol v1 at the commit that introduced it. Approved by you for Gate 2 on 2026-10-29 with no changes. Freeze record: commit `58e59c0e5fd2dc1cdd647336363984f349457ec7` (`docs(protocol): add Protocol v1 draft for Gate 1 approval`), git blob `552107deaaad9b413aef8d125bf62bac3b7c199d` for `docs/protocol/PROTOCOL_v1.md`, SHA-256 of the working-copy file `D1D4234B4162B0FE48BD7A9369D50DADAC97E51C4AF4C8915C27E42BB8C92718` (LF line endings), local annotated tag `protocol-v1` on that commit (not pushed).
+
+### Context / Problem
+The gated protocol requires the analysis plan to be fixed before any Gate 2 modelling, so later results cannot be adjusted to the analysis. D065's statement that freezing records the protocol commit hash in the experiment registry stands; the registry does not exist yet, so the hash is recorded here and will be copied into the registry when it is created.
+
+### Evidence
+The file has not changed since commit 58e59c0 (`git log` for the path shows that commit as the latest). Later commits touch only Decision.md.
+
+### Alternatives Considered
+(a) Freeze at the later D065 commit. (b) Freeze without a tag, by hash only.
+
+### Why Alternatives Were Not Chosen
+(a) That commit changes only Decision.md, so the protocol-bearing commit is the cleaner anchor. (b) A tag gives a verifiable pointer that survives later history; the hash and blob id are recorded as well.
+
+### Implementation
+Tag `protocol-v1` created locally; this entry only. No push.
+
+### Status
+Frozen. Any deviation is logged as a new entry referencing D066, not by editing the protocol.
+
+### Impact
+Gate 2 runs only what the frozen protocol specifies for H1 (B+exposure vs B+G+exposure).
+
+### Remarks
+Estimation engine for the mixed model is not part of the frozen text (the protocol leaves it to Gate 2); the choice is recorded as its own entry.
