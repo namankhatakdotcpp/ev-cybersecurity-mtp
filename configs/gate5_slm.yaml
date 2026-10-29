@@ -1,0 +1,40 @@
+# Gate 5 configuration: SLM scenario set (Protocol v1 section 9). Committed before the scenario set is built; the set is then
+# shown for approval, and NO model is run until it is approved.
+seed: 20261029
+paths:
+  raw_data_dir: backend/raw_data
+  feature_table: backend/pipeline/feature_table.csv          # used only to list the canonical sessions
+  screenshot_analysis: backend/screenshots_analysis.csv      # vision-model descriptions of the coupon images (local file)
+  out_dir: scenarios/slm_v1                                  # inputs, truth, manifest (no participant or session identifiers)
+  private_map: results/_tables/scenario_source_map.csv       # scenario id -> session/event index (gitignored)
+  env_overrides: {raw_data_dir: EV_RAW_DATA_DIR, feature_table: EV_FEATURE_TABLE, screenshot_analysis: EV_SCREENSHOT_ANALYSIS}
+
+sampling:
+  n_stations: 240
+  strata:                       # station-level strata; "available" kiosks only (a kiosk marked In Use is never attacked-labelled)
+    benign:   {n: 40,  rule: "no attacked available kiosk"}
+    all_attacked: {n: 40, rule: "every available kiosk is attacked"}
+    mixed:    {n: 160, rule: "at least one attacked and at least one safe available kiosk"}
+  max_per_session: 3            # limits dependence on any single participant's session
+  min_kiosks_per_visible_class: 30
+  min_attacked_per_hidden_mode: 30
+  repair_attempts: 200          # deterministic swap-in of stations holding a deficient class (same seed stream)
+  malicious_condition_stations: 60     # drawn from the mixed stratum
+
+visible_classes:                # what a participant could see; mutually exclusive, assigned in this order
+  - {name: legitimate_discount,       rule: "safe and discount badge shown"}
+  - {name: fake_discount,             rule: "attacked and discount badge shown"}
+  - {name: ambiguous_safe_deepfake,   rule: "safe, no badge, coupon image is a deepfake asset"}
+  - {name: obvious_attack_deepfake,   rule: "attacked, no badge, coupon image is a deepfake asset"}
+  - {name: ambiguous_attack_real,     rule: "attacked, no badge, coupon image is a real asset or absent"}
+  - {name: benign_plain,              rule: "safe, no badge, coupon image is a real asset or absent"}
+hidden_modes:                   # consequences after charging; NOT visible before the decision
+  none: safe
+  reduced: "incomplete charging (delivered charge is reduced)"
+  blocked: "no charge delivered"
+overcharging: not_present_in_metadata        # dropped unless you approve clearly labelled synthetic scenarios
+
+evidence_variants:
+  V1: "cue-free: kiosk availability, whether a discount badge is shown, whether a coupon image is shown; battery and points"
+  V2: "V1 plus the automated screenshot analysis of each shown coupon image (visual description and noted anomalies), as the deployed assistant receives it"
+image_description_choice: first_well_formed_row_in_file_order      # deterministic; the number of variants per image is reported
