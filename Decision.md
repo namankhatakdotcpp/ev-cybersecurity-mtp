@@ -3671,3 +3671,36 @@ No registered result, table or report changed. The results do not depend on this
 
 ### Remarks
 The finding means `build_feature_table.py` is not reproducible across pandas versions even with correct paths; `docs/REPRODUCE.md` should say so until it is fixed.
+
+
+## D089
+
+### Date
+2026-10-29
+
+### Decision
+On the user's approval, `build_feature_table.py` was changed as a documented deviation: configurable paths through `backend/pipeline/paths.py`, a resolution-independent conversion of EEG timestamps to milliseconds, LF line endings in the CSV, and `-0.0` normalised to `0.0`. The committed `feature_table.csv` was not touched or replaced.
+
+### Context / Problem
+D088: the rebuilt table differed from the committed one (all EEG columns empty under pandas 2.3.3, CRLF line endings, signed zeros).
+
+### Evidence
+Rebuild into a scratch file: 1,123 x 36, `eeg_missing` 799 of 1,123, LF line endings, 66 cells differ, all of them `-0.0` (committed) against `0.0` (rebuilt); the committed file with those fields rewritten is byte-identical to the rebuild. SHA-256 not equal (`dfd8b114...` against `161577ae...`). New test `backend/pipeline/tests/test_feature_table_helpers.py` (the conversion gives the same milliseconds for ns, us and ms datetime units). 67 tests pass under `backend/pipeline` and `backend/fps`.
+
+### Alternatives Considered
+Not normalising signed zeros (one differing cell in the diagnostic run); replacing the committed table with the rebuild.
+
+### Why Alternatives Were Not Chosen
+The normalisation was part of the approved fix and makes the output independent of the platform; replacing the table would change the checksum used by every registered run, and the values are the same.
+
+### Implementation
+`paths.py` gained `PIPELINE`, `EEG_DECODED`, `EEG_SUMMARY`, `CONTAMINATED_JSON` and `FEATURE_TABLE` (environment overrides `EV_EEG_DECODED_DIR` and `EV_FEATURE_TABLE`). `build_feature_table.py` imports them and uses `_epoch_ms`. The other twelve files in `docs/audit/HARDCODED_PATHS.md` are untouched.
+
+### Status
+Complete for `build_feature_table.py`: values reproduced, bytes not (66 signed zeros). Open: the other twelve files and the guard-test extension.
+
+### Impact
+No registered result changed. The registered analyses used the committed table, whose values the rebuild reproduces.
+
+### Remarks
+The script's behaviour under pandas 2.x changes from "EEG columns empty" to "same as committed", so any future rebuild is comparable with the committed table; `docs/REPRODUCE.md` was updated.

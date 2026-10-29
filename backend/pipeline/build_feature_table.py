@@ -26,11 +26,13 @@ import pandas as pd
 from sklearn.cluster import DBSCAN
 from scipy.signal import welch
 
-RAW_DATA_DIR = "/Users/naman/Documents/MTP/backend/raw_data"
-EEG_DECODED_DIR = "/Users/naman/Documents/MTP/backend/Muse/decoded"
-CONTAMINATED_JSON = "/Users/naman/Documents/MTP/backend/rag_contaminated_sessions.json"
-EEG_SUMMARY_CSV = "/Users/naman/Documents/MTP/backend/Muse/decoded/decode_summary_resynced.csv"
-OUT_CSV = "/Users/naman/Documents/MTP/backend/pipeline/feature_table.csv"
+from backend.pipeline import paths  # configurable roots; run from the repository root: python -m backend.pipeline.build_feature_table
+
+RAW_DATA_DIR = str(paths.RAW)
+EEG_DECODED_DIR = str(paths.EEG_DECODED)
+CONTAMINATED_JSON = str(paths.CONTAMINATED_JSON)
+EEG_SUMMARY_CSV = str(paths.EEG_SUMMARY)
+OUT_CSV = str(paths.FEATURE_TABLE)
 
 VELOCITY_THRESHOLD_DEG_S = 30.0
 MIN_FIXATION_MS = 100.0
@@ -290,6 +292,11 @@ def gaze_features(fixations):
 _eeg_cache = {}
 
 
+def _epoch_ms(col):
+    """Milliseconds since the Unix epoch for ISO timestamps, whatever resolution pandas infers."""
+    return (pd.to_datetime(col, utc=True) - pd.Timestamp("1970-01-01", tz="UTC")) / pd.Timedelta(milliseconds=1)
+
+
 def load_eeg_pair(pid):
     if pid in _eeg_cache:
         return _eeg_cache[pid]
@@ -299,12 +306,11 @@ def load_eeg_pair(pid):
         _eeg_cache[pid] = None
         return None
     eeg = pd.read_csv(eeg_path, usecols=["timestamp_utc"] + EEG_CHANNELS)
-    # pandas parses these ISO timestamps at microsecond precision (datetime64[us]),
-    # so .astype("int64") yields MICROSECONDS since epoch, not nanoseconds - divide
-    # by 1e3 (us->ms), not 1e6, to line up with the ms-scale interaction timestamps.
-    eeg["t_epoch_ms"] = pd.to_datetime(eeg["timestamp_utc"]).astype("int64") / 1e3
+    # Deviation D089: milliseconds since the epoch computed independently of the datetime resolution pandas infers
+    # (nanoseconds in pandas 2.x, microseconds in the original environment); the earlier `astype("int64") / 1e3` was only right for microseconds.
+    eeg["t_epoch_ms"] = _epoch_ms(eeg["timestamp_utc"])
     acc = pd.read_csv(acc_path, usecols=["timestamp_utc", "ACC_X", "ACC_Y", "ACC_Z"])
-    acc["t_epoch_ms"] = pd.to_datetime(acc["timestamp_utc"]).astype("int64") / 1e3
+    acc["t_epoch_ms"] = _epoch_ms(acc["timestamp_utc"])
     acc["mag"] = np.sqrt(acc["ACC_X"] ** 2 + acc["ACC_Y"] ** 2 + acc["ACC_Z"] ** 2)
     threshold = acc["mag"].median()
     _eeg_cache[pid] = (eeg, acc, threshold)
@@ -409,7 +415,9 @@ def main():
               f"eeg_qualified={bool(eeg_pid_for_lookup)}")
 
     out = pd.DataFrame(rows)
-    out.to_csv(OUT_CSV, index=False)
+    num = out.select_dtypes("float").columns
+    out[num] = out[num] + 0.0                                      # D089: -0.0 becomes 0.0, so the bytes do not depend on the platform's signed zeros
+    out.to_csv(OUT_CSV, index=False, lineterminator="\n")         # D089: LF on every operating system
     print(f"\nWrote {len(out)} rows ({out['participant_id'].nunique()} participants) to {OUT_CSV}")
     print("\nMissingness summary:")
     print("  gaze_missing:", out["gaze_missing"].sum(), "/", len(out))

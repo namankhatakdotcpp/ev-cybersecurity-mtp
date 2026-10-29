@@ -44,3 +44,20 @@ If the fix is approved, the committed `feature_table.csv` should still not be re
 
 - **What could be wrong:** the diagnostic rebuild B used a modified copy of the script that is not in the repository; the claim "all other cells identical" comes from comparing the two files as text; I did not run the older pandas version to confirm the microsecond behaviour, only the 2.3.3 behaviour and the script's own comment.
 - **Not done:** the other twelve files' path edits, the `.gitignore` entry for the scratch folder, extending the guard test, any change to the committed table or registry.
+
+## Outcome after the approved fix (D089)
+
+Applied to `build_feature_table.py`: unit-independent millisecond conversion (`_epoch_ms`), `lineterminator="\n"`, and `-0.0` normalised to `0.0` before writing. The table was rebuilt into a scratch file; the committed table was not touched.
+
+| Check | Result |
+|---|---|
+| Rows, columns, column order | 1,123 x 36, identical |
+| `eeg_missing` | 799 of 1,123, same as committed |
+| Line endings | LF, same as committed |
+| SHA-256 equal to committed | **No** (`dfd8b114...` against `161577ae...`) |
+| Cells that differ | 66, **all** of them `-0.0` in the committed file against `0.0` in the rebuild (65 in `gaze_entropy_bits`, 1 in `gaze_dispersion`) |
+| Committed file with those 66 fields rewritten from `-0.0` to `0.0` | byte-identical to the rebuild |
+
+So every value is reproduced and the only difference is the sign of zero in 66 cells. The signed-zero normalisation chosen in the approved fix is what makes these 66 differ: without it, the diagnostic rebuild differed in one cell only (the platform produced `-0.0` for the other 65), so neither choice gives a byte match with the file built on the original machine. A byte match would require not normalising and accepting that the sign of zero depends on the platform. The committed table was left as is; nothing recorded in the registry changes, because `-0.0` and `0.0` are equal as numbers.
+
+The acceptance test therefore passes on content (all values) and fails on bytes (66 signed zeros); that is reported, not hidden.
