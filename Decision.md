@@ -3398,3 +3398,38 @@ Conclusions of the Gate 5 report are unchanged: no model beats the best baseline
 
 ### Remarks
 The push of `main` to GitHub is pending the user's own login; 53 commits were local at the time of writing.
+
+
+---
+
+## D081
+
+### Date
+2026-10-29
+
+### Decision
+Gate 5 accepted as is on the user's instruction. The malicious-override pass stays unscored. Wrote the results-chapter outline (`docs/report/MTP_results_outline.md`) from existing reports only.
+
+### Context / Problem
+After D080 the user approved moving on and said not to score the malicious pass yet.
+
+### Evidence
+The outline quotes figures from the Gate 0 audit, Gate 2 to Gate 6 reports and `results/master_table_gate5.md`. No analysis or model run was made for it.
+
+### Alternatives Considered
+Score the malicious pass first; start Gate 7 directly.
+
+### Why Alternatives Were Not Chosen
+The user chose to defer the malicious pass; Gate 7 needs the outline and the claims register first.
+
+### Implementation
+Outline sections: framing, methods, six result sections, discussion points, claims register (the malicious-override claim is listed as "not assessed"), limitations, open items.
+
+### Status
+Outline complete. Gate 7 (final report) not started. Push of `main` pending the user's own login.
+
+### Impact
+The claims register fixes what the final report may say. The malicious pass must be reported as run but unscored unless it is scored later under a rule written into the spec first.
+
+### Remarks
+The outline is a working document and may change when the open items are resolved.
