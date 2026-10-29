@@ -1,6 +1,6 @@
 # Gate 5 report: SLM benchmark (accuracy pass)
 
-Scored per `docs/protocol/GATE5_scoring_spec.md` (committed 07439e5, before any reply was scored). Full tables: `results/master_table_gate5.md` (generated from the registry). Scenario set, prompts and decoding are those approved in D070/D071. **Status: accuracy pass (temperature 0, seed 1) scored. The 5-seed consistency pass at temperature 0.3 is still running; Table 6 of the master table is partial and is not interpreted here.** The malicious-override condition has been run (600 replies, produced outside this session) and is not scored here; it needs its own go-ahead and a rule fixed first.
+Scored per `docs/protocol/GATE5_scoring_spec.md` (committed 07439e5, before any reply was scored). Full tables: `results/master_table_gate5.md` (generated from the registry). Scenario set, prompts and decoding are those approved in D070/D071. **Status: accuracy pass (temperature 0, seed 1) and consistency pass (5 seeds, temperature 0.3) scored; the consistency results are in section 8 (added after the pass finished, D080).** The malicious-override condition has been run (600 replies, produced outside this session) and is not scored here; it needs its own go-ahead and a rule fixed first.
 
 Process note (D071): approval was given in chat and recorded afterwards. `score_slm.py` was written after the pass had started; its parsing rule is the one frozen in `configs/gate5_prompts.yaml` (committed before any model call), and within this session no number was looked at before the spec was committed, but see Disclosures: the user reports an earlier provisional scoring run whose numbers were seen.
 
@@ -59,9 +59,21 @@ Pilot compliance 95% to 100% (all above the 90% line). In the scored set mistral
 
 ## 7. Open items
 
-1. Consistency pass (running); then re-register and regenerate the master table, and add the consistency paragraph to this report.
-2. Decision on whether to commit the registry rows and master table after the consistency re-run (they are currently uncommitted).
-3. The scoring code was committed after the pass; the registry rows made now carry commit 07439e5 (spec only). Re-registration after the code commit fixes this.
+1. Done (D080): consistency pass scored, rows re-registered, master table regenerated, section 8 added.
+2. Malicious-override pass: still unscored; needs the user's go-ahead and a rule fixed first.
+3. The scoring code was committed before this re-registration; the new registry rows carry the later commit.
+
+## 8. Consistency pass (temperature 0.3, seeds 1 to 5; D080)
+
+Master table 6. All 960 items per model were run at five seeds (4,800 replies per model). Scored under the same spec; no rule was changed after the results were seen.
+
+- **Mean rates match the accuracy pass.** False-safe and false-warning averaged over seeds sit within about 0.02 of the temperature-0 values for every model and variant, and the range across seeds is narrow (for example llama3.1 V2 false-safe 0.401 [0.395, 0.412]; qwen2.5 V1 0.654 [0.649, 0.663]). Sampling noise at temperature 0.3 does not change any conclusion in sections 2 to 4.
+- **Models are stable, not accurate.** Detection replies are identical across all five seeds for 0.82 to 1.00 of kiosks (phi3 lowest at 0.82 to 0.83; gemma2 0.996 to 1.000; qwen2.5 0.955 to 0.965). Recommendations are identical for 0.69 to 0.97 of stations (phi3 V2 lowest at 0.69). High agreement says the answers repeat, not that they are right.
+- **gemma2 V1 is degenerate in all five seeds** (5 of 5): false-safe 0.993, false-warning 0.003, i.e. it answers SAFE to essentially everything. No other model-variant is degenerate in any seed.
+- **mistral data note.** Its consistency file has 6,033 lines (4,799 distinct item-seed pairs; 1,234 duplicated and one pair, `V1|recommendation|S001` seed 4, absent). The duplicates come from an interrupted and resumed run; scoring keeps the first reply per item and seed (D076). One missing pair of 4,800 is not expected to move any figure, and its effect was not separately measured.
+- **Latency and VRAM from this pass are not used** (three parallel workers).
+
+**Critical review (consistency).** *Learned:* the accuracy-pass picture is not a sampling accident. *Failed or uncertain:* mistral's file irregularity; the check says nothing about other prompt wordings. *Defensible:* results are stable across seeds at temperature 0.3 and the gemma2 V1 degeneracy is reproducible. *Not defensible:* using stability as evidence of ability. *Do not test next:* more seeds or temperatures to look for a better configuration.
 
 ## Disclosures (D078, spec Amendment A1)
 
