@@ -2,7 +2,7 @@
 
 Scenario set v1 (approved): 240 stations, 599 available kiosks, quota-sampled; per-class results are the unit of interpretation and overall numbers are not prevalence-weighted. Scoring per `docs/protocol/GATE5_scoring_spec.md`: UNSAFE is the positive class; a failed reply counts as wrong on every kiosk it covers; false-safe and false-warning are always shown together; intervals on rates are Wilson 95% (nominal: kiosks within a station are not independent); comparisons with the best reference predictor use a scenario-level bootstrap (2000 resamples) and Holm adjustment over 10 comparisons (5 models x V1 and V2 excluding label-flagged images). A model is never described as detecting anything if it is flagged degenerate.
 
-Runs: mistral:7b-instruct: `g5_slm_mistral_7b-instruct_20261029_171424_147876` (code unknown); llama3.1:8b: `g5_slm_llama3.1_8b_20261029_171424_179780` (code unknown); phi3:3.8b: `g5_slm_phi3_3.8b_20261029_171424_199310` (code unknown); gemma2:9b: `g5_slm_gemma2_9b_20261029_171424_218825` (code unknown); qwen2.5:7b: `g5_slm_qwen2.5_7b_20261029_171424_237838` (code unknown)
+Runs: mistral:7b-instruct: `g5_slm_mistral_7b-instruct_20261029_173356_204445` (code 3784ea5); llama3.1:8b: `g5_slm_llama3.1_8b_20261029_173356_314078` (code 3784ea5); phi3:3.8b: `g5_slm_phi3_3.8b_20261029_173356_417141` (code 3784ea5); gemma2:9b: `g5_slm_gemma2_9b_20261029_173356_518751` (code 3784ea5); qwen2.5:7b: `g5_slm_qwen2.5_7b_20261029_173356_620852` (code 3784ea5)
 
 
 ### Table 1. Format pilot (20 synthetic stations, no accuracy score)
@@ -189,7 +189,7 @@ Empty if the consistency pass has not been run or registered.
 
 | Model | Variant | Seeds scored | False-safe mean [min, max] | False-warning mean [min, max] | Degenerate seeds (detection) | Detection: identical across seeds | Detection: mean pairwise agreement | Recommendation: identical across seeds |
 |---|---|---|---|---|---|---|---|---|
-| mistral:7b-instruct | V1 | 5 | 0.904 [0.890, 0.931] | 0.222 [0.211, 0.240] | 0/5 | 0.920 [0.893, 0.941] | 0.962 | 0.862 [0.812, 0.900] |
+| mistral:7b-instruct | V1 | 5 | 0.904 [0.890, 0.931] | 0.222 [0.211, 0.240] | 0/5 | 0.920 [0.893, 0.941] | 0.962 | 0.863 [0.813, 0.900] |
 | mistral:7b-instruct | V2 | 5 | 0.673 [0.649, 0.698] | 0.545 [0.532, 0.555] | 0/5 | 0.877 [0.838, 0.908] | 0.939 | 0.875 [0.827, 0.911] |
 | llama3.1:8b | V1 | 5 | 0.845 [0.832, 0.856] | 0.145 [0.140, 0.149] | 0/5 | 0.928 [0.904, 0.946] | 0.967 | 0.925 [0.885, 0.952] |
 | llama3.1:8b | V2 | 5 | 0.401 [0.395, 0.412] | 0.488 [0.481, 0.494] | 0/5 | 0.918 [0.892, 0.938] | 0.957 | 0.863 [0.813, 0.900] |
