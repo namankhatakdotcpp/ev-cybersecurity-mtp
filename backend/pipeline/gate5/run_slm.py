@@ -5,6 +5,9 @@ Scoring is separate (score_slm.py), so no metric is computed while the models ru
   python -m backend.pipeline.gate5.run_slm accuracy       # temperature 0, seed 1: V1/V2 x detection/recommendation (+ latency, VRAM)
   python -m backend.pipeline.gate5.run_slm malicious      # override condition on the 60 designated mixed stations
   python -m backend.pipeline.gate5.run_slm consistency    # temperature 0.3, seeds 1-5 (same items as the accuracy pass)
+  python -m backend.pipeline.gate5.run_slm malicious all 1 malicious_rerun   # optional 4th argument: write to a new results/_slm/<name> directory
+
+Each invocation also writes results/_slm/<dir>/_provenance_<utc>.json (git commit, Ollama version, model digests, prompt and scenario hashes).
 
 Replies are appended to results/_slm/<pass>/<model>.jsonl (gitignored) and runs resume where they stopped."""
 import json
@@ -114,12 +117,43 @@ def items_for(step, cfg_scen, prm):
     return items
 
 
-def run(step, models=None, workers=1):
+def _sha256(path):
+    import hashlib
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def write_provenance(out_dir, step, models, workers, dec):
+    """Record what produced a result directory (never overwritten: one file per invocation)."""
+    import datetime
+    import platform
+    git = lambda *a: subprocess.run(["git", *a], cwd=REPO_ROOT, capture_output=True, text=True).stdout.strip()
+    try:
+        ver = json.loads(urllib.request.urlopen(URL + "/api/version", timeout=10).read().decode("utf-8")).get("version")
+        tags = {m["name"]: dict(digest=m.get("digest"), size_bytes=m.get("size")) for m in json.loads(urllib.request.urlopen(URL + "/api/tags", timeout=10).read().decode("utf-8")).get("models", [])}
+    except Exception as e:
+        ver, tags = f"unavailable: {e}", {}
+    d = load_cfg()["paths_resolved"]["out_dir"]
+    try:
+        gpu = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.used,memory.total,utilization.gpu", "--format=csv,noheader,nounits"], capture_output=True, text=True, timeout=10).stdout.strip()
+    except Exception:
+        gpu = None
+    prov = dict(step=step, started_utc=datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z", git_commit=git("rev-parse", "HEAD"),
+                git_tracked_changes=git("status", "--porcelain", "--untracked-files=no").splitlines(), ollama_version=ver,
+                models={m: tags.get(m) for m in models}, prompts_sha256=_sha256(REPO_ROOT / "configs" / "gate5_prompts.yaml"),
+                scenarios_inputs_sha256=_sha256(d / "scenarios_inputs.jsonl"), scenarios_truth_sha256=_sha256(d / "scenarios_truth.jsonl"),
+                decoding=dec, workers=workers, gpu_before_run=gpu, python=platform.python_version(), os=platform.platform())
+    p = out_dir / f"_provenance_{prov['started_utc'].replace(':', '').replace('-', '')}.json"
+    p.write_text(json.dumps(prov, indent=1), encoding="utf-8")
+    return p
+
+
+def run(step, models=None, workers=1, out_name=None):
     cfg = load_cfg()
     prm = prompts()
     dec = prm["decoding"]
-    out_dir = REPO_ROOT / "results" / "_slm" / step
+    out_dir = REPO_ROOT / "results" / "_slm" / (out_name or step)
     out_dir.mkdir(parents=True, exist_ok=True)
+    write_provenance(out_dir, step, models or MODELS, workers, dec)
     items = items_for(step, cfg, prm)
     if step == "consistency":
         passes = [dict(temperature=dec["consistency_pass"]["temperature"], seed=s) for s in dec["consistency_pass"]["seeds"]]
@@ -175,4 +209,5 @@ if __name__ == "__main__":
     step = sys.argv[1]
     models = sys.argv[2].split(",") if len(sys.argv) > 2 and sys.argv[2] != "all" else None
     workers = int(sys.argv[3]) if len(sys.argv) > 3 else 1
-    run(step, models, workers)
+    out_name = sys.argv[4] if len(sys.argv) > 4 else None
+    run(step, models, workers, out_name)
